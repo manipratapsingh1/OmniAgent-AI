@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🧠 OmniAgent AI - Advanced Multi-Agent System
 
 A comprehensive **God-Level AI System** with 11 cutting-edge features including multi-agent intelligence, long-term memory, RAG knowledge base, tool integration, task automation, and developer assistance.
@@ -344,3 +345,6 @@ MIT License - see LICENSE file
 **Built with ❤️ using Python, FastAPI, React, and LangChain**
 
 🚀 **Ready to build the future of AI?**
+=======
+# OmniAgent-AI
+>>>>>>> 3055ebab0ecbc7a70c11215102c9bae54d8f13d3
