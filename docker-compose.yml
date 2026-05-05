@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: omniai_db
+    environment:
+      POSTGRES_USER: omniai
+      POSTGRES_PASSWORD: omniai_secure_password
+      POSTGRES_DB: omniai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omniai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omniai_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: omniai_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omniai_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: omniai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://omniai:omniai_secure_password@database:5432/omniai
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: omniai_dev_secret_key_change_production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: http://localhost:3000,http://localhost
+      ENVIRONMENT: development
+      PORT: 8000
+      WORKERS: 4
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./Backend:/app
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - omniai_network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:8000
+        REACT_APP_WS_URL: ws://localhost:8000
+    container_name: omniai_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_WS_URL: ws://localhost:8000
+      BROWSER: none
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    stdin_open: true
+    tty: true
+    networks:
+      - omniai_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  omniai_network:
+    driver: bridge
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: omniai_network
