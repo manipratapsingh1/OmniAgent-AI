@@ -35,7 +35,7 @@ nano .env  # or use your editor
 ```
 Change these 3 lines:
 ```env
-DATABASE_URL=postgresql://user:pass@host:5432/omniagent
+DATABASE_URL=your_database_url
 CORS_ORIGINS=https://yourdomain.com
 OLLAMA_BASE_URL=http://localhost:11434
 ```
@@ -87,7 +87,7 @@ Should return: `200 OK`
 | Variable | Example | Required |
 |----------|---------|----------|
 | `SECRET_KEY` | `k9X8p2L...` (auto-generated) | ✅ Yes |
-| `DATABASE_URL` | `postgresql://user:pass@localhost:5432/omniagent` | ✅ Yes |
+| `DATABASE_URL` | `your_database_url` | ✅ Yes |
 | `CORS_ORIGINS` | `https://yourdomain.com` | ✅ Yes |
 | `APP_ENV` | `production` | Auto-set |
 | `SENTRY_DSN` | `https://...@sentry.io/...` | ❌ Optional |
@@ -770,7 +770,7 @@ rag_logger.log_retrieval({"query": "python", "results": 5})
 
 ```bash
 # Required for LLM
-OPENAI_API_KEY=sk_...
+OPENAI_API_KEY=your_openai_api_key
 
 # Security (generate with: python -c "import secrets; print(secrets.token_urlsafe(32))")
 SECRET_KEY=your_secret_key_here

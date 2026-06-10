@@ -285,8 +285,8 @@ nano .env  # or use any editor
 
 **Minimal .env** (for testing):
 ```env
-OPENAI_API_KEY=your_key_here
-DATABASE_URL=postgresql://omniai:omniai123@localhost:5432/omniai
+OPENAI_API_KEY=your_openai_api_key
+DATABASE_URL=your_database_url
 REDIS_URL=redis://localhost:6379/0
 ```
 

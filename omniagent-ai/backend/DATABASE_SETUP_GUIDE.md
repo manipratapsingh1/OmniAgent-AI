@@ -43,7 +43,7 @@ CREATE DATABASE omniagent;
 Edit `backend/.env` and ensure:
 ```env
 # Database - must match your PostgreSQL setup
-DATABASE_URL=postgresql://postgres:1234@localhost:5432/omniagent
+DATABASE_URL=your_database_url
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -208,8 +208,8 @@ The system now properly initializes the database:
 
 ```env
 # Required
-SECRET_KEY=your-secret-key-min-32-chars
-DATABASE_URL=postgresql://postgres:password@localhost:5432/omniagent
+SECRET_KEY=your_secret_key
+DATABASE_URL=your_database_url
 
 # Redis (optional, for caching)
 REDIS_URL=redis://localhost:6379

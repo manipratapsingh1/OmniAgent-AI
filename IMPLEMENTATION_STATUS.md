@@ -423,7 +423,7 @@ docker-compose up -d
 # Heroku
 heroku create omniai-prod
 heroku addons:create heroku-postgresql:standard-0
-heroku config:set ENVIRONMENT=production OPENAI_API_KEY=sk_...
+heroku config:set ENVIRONMENT=production OPENAI_API_KEY=your_openai_api_key
 git push heroku main
 
 # AWS/Digital Ocean

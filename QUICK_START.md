@@ -3,7 +3,7 @@
 ## Prerequisites
 
 Ensure you have these services running:
-- PostgreSQL: `postgresql://postgres:1234@localhost:5432/omniagent`
+- PostgreSQL: `your_database_url` (e.g. postgresql://username:password@host:5432/omniagent)
 - Redis: `redis://localhost:6379/0`
 - Ollama (optional): `http://localhost:11434` with `llama3.2` model
 
@@ -164,7 +164,7 @@ Create or update `.env` file:
 
 ```
 # Database
-DATABASE_URL=postgresql://postgres:1234@localhost:5432/omniagent
+DATABASE_URL=your_database_url
 
 # Redis (for background jobs)
 REDIS_URL=redis://localhost:6379/0
@@ -189,7 +189,7 @@ ASSISTANT_ENABLED=True
 ## Next Steps
 
 1. **Integrate Real LLMs**:
-   - Add OpenAI API key: `OPENAI_API_KEY=sk-...`
+  - Add OpenAI API key: `OPENAI_API_KEY=your_openai_api_key`
    - Add Gemini API key: `GEMINI_API_KEY=...`
    - Update provider selection in AIService
 

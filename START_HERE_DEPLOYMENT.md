@@ -74,7 +74,7 @@ nano .env  # or use your favorite editor
 
 Change **these 3 lines**:
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/omniagent
+DATABASE_URL=your_database_url
 CORS_ORIGINS=https://yourdomain.com
 OLLAMA_BASE_URL=http://localhost:11434
 ```

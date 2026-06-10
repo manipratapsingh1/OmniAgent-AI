@@ -159,10 +159,10 @@ Covers:
 
 ### Environment Variables
 ```
-DATABASE_URL=postgresql://postgres:password@localhost:5432/omniagent
+DATABASE_URL=your_database_url
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_DEFAULT_MODEL=llama3.2
-JWT_SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your_jwt_secret
 ```
 
 ### Feature Flags

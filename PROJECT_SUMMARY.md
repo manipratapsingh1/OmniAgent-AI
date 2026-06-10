@@ -180,7 +180,7 @@ uvicorn main:app --reload
 cd frontend && npm install && npm start
 
 # Terminal 3: PostgreSQL
-docker run -e POSTGRES_PASSWORD=omniai123 -p 5432:5432 postgres:15
+docker run -e POSTGRES_PASSWORD=your_postgres_password -p 5432:5432 postgres:15
 
 # Terminal 4: Redis
 docker run -p 6379:6379 redis:alpine

@@ -305,7 +305,7 @@ curl -X POST http://localhost:8000/api/v1/chat/messages \
 SECRET_KEY=your-secret-key-min-32-chars
 
 # Database
-DATABASE_URL=postgresql://postgres:password@localhost:5432/omniagent
+DATABASE_URL=your_database_url
 
 # Optional Services
 REDIS_URL=redis://localhost:6379

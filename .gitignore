@@ -71,3 +71,35 @@ yarn-error.log*
 # Misc
 .DS_Store
 Thumbs.db
+
+# Env and secrets
+*.env
+.env.*
+
+# Build outputs
+build/
+dist/
+
+# Uploads and logs
+uploads/
+logs/
+
+# Databases
+*.sqlite3
+*.db
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*~
+.cache/
