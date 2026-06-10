@@ -29,7 +29,7 @@ Production-ready AI system with authentication, database persistence, comprehens
 1. **OpenAI API Key** (Required for LLM)
    - https://platform.openai.com/
    - Create account → API keys → Create new
-   - Copy key: `sk_...`
+   - Copy key: `your_openai_api_key`
 
 2. **Google API Key** (Optional, for web search)
    - https://console.cloud.google.com/
@@ -71,7 +71,7 @@ Edit `.env` and add your API keys:
 
 ```env
 # Required
-OPENAI_API_KEY=sk_your_key_here
+OPENAI_API_KEY=your_openai_api_key
 
 # Optional
 GOOGLE_API_KEY=your_key
@@ -230,7 +230,7 @@ DATABASE_URL=sqlite:///./omniai.db
 # For PostgreSQL: postgresql+psycopg2://omniai:password@localhost:5432/omniai
 
 # ============= API KEYS =============
-OPENAI_API_KEY=sk_test_...
+OPENAI_API_KEY=your_openai_api_key
 GOOGLE_API_KEY=
 OPENWEATHER_API_KEY=
 
@@ -451,8 +451,8 @@ docker-compose logs database
 #### API Key Issues
 
 **"Invalid OpenAI API key"**
-- Verify key in .env: `OPENAI_API_KEY=sk_...`
-- Key must start with `sk_`
+- Verify key in .env: `OPENAI_API_KEY=your_openai_api_key`
+- Key must start with the OpenAI key prefix
 - Check quota at OpenAI dashboard
 - Regenerate if expired
 
@@ -783,7 +783,7 @@ heroku create omniai-prod
 heroku addons:create heroku-postgresql:standard-0
 
 # Set environment variables
-heroku config:set OPENAI_API_KEY=sk_...
+heroku config:set OPENAI_API_KEY=your_openai_api_key
 heroku config:set ENVIRONMENT=production
 
 # Deploy

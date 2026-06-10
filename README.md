@@ -137,7 +137,7 @@ cp .env.example .env
 
 # Add API keys
 nano .env
-# OPENAI_API_KEY=sk_...
+# OPENAI_API_KEY=your_openai_api_key
 
 # Start everything
 docker-compose up -d
@@ -220,7 +220,7 @@ DATABASE_URL=sqlite:///./omniai.db
 # PostgreSQL: postgresql+psycopg2://user:pass@host/db
 
 # API Keys
-OPENAI_API_KEY=sk_...
+OPENAI_API_KEY=your_openai_api_key
 GOOGLE_API_KEY=...
 OPENWEATHER_API_KEY=...
 
@@ -321,7 +321,7 @@ npm test
 ```bash
 heroku create omniai-app
 heroku addons:create heroku-postgresql:standard-0
-heroku config:set OPENAI_API_KEY=sk_...
+heroku config:set OPENAI_API_KEY=your_openai_api_key
 git push heroku main
 ```
 
