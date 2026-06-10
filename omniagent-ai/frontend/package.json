@@ -1,0 +1,48 @@
+{
+  "name": "omniagent-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,js,jsx,json,md}\"",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview --port 5173 --host"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "framer-motion": "^10.16.4",
+    "highlight.js": "^11.8.0",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^4.12.0",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.26.2",
+    "rehype-highlight": "^6.0.0",
+    "remark-gfm": "^3.0.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.160.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-jsx-a11y": "^6.8.1",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.47",
+    "prettier": "^3.0.0",
+    "tailwindcss": "^3.4.13",
+    "terser": "^5.36.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.8"
+  }
+}

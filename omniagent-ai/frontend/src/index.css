@@ -1,0 +1,516 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   FOUNDATION STYLES - Professional Base Styling
+   ============================================================================ */
+
+html, body, #root {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  @apply bg-slate-950 text-slate-100;
+  color-scheme: dark;
+}
+
+/* Professional scrollbar styling */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb 0%, #7c3aed 100%);
+  background-clip: content-box;
+}
+
+/* ============================================================================
+   GLASS MORPHISM EFFECTS - Professional Panel Styling
+   ============================================================================ */
+
+.glass-panel {
+  @apply bg-gradient-to-br from-slate-800/30 to-slate-900/40 backdrop-blur-xl border border-slate-700/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+}
+
+.glass-panel-light {
+  @apply bg-gradient-to-br from-slate-700/20 to-slate-800/20 backdrop-blur-lg border border-slate-600/30 rounded-lg;
+}
+
+.glass-panel-premium {
+  @apply bg-gradient-to-br from-slate-800/50 via-blue-950/20 to-slate-900/50 backdrop-blur-xl border border-blue-600/30 rounded-xl shadow-2xl;
+}
+
+/* ============================================================================
+   TEXT & TYPOGRAPHY - Gradient & Professional Text
+   ============================================================================ */
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300 bg-clip-text text-transparent;
+}
+
+.gradient-text-secondary {
+  @apply bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent;
+}
+
+.gradient-text-accent {
+  @apply bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent;
+}
+
+/* Improve text readability with proper contrast */
+body {
+  @apply antialiased;
+}
+
+/* ============================================================================
+   BUTTON STYLES - Professional Button System
+   ============================================================================ */
+
+.btn-primary {
+  @apply px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-medium rounded-lg transition duration-300 shadow-lg hover:shadow-glow-md border border-blue-400/30 cursor-pointer;
+}
+
+.btn-primary:active {
+  @apply scale-95;
+}
+
+.btn-primary:focus {
+  @apply outline-none ring-2 ring-blue-500/50;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white font-medium rounded-lg transition duration-300 border border-slate-600/50 shadow-md;
+}
+
+.btn-secondary:focus {
+  @apply outline-none ring-2 ring-slate-500/50;
+}
+
+.btn-danger {
+  @apply px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-300 font-medium rounded-lg transition duration-300 border border-red-600/30 shadow-md;
+}
+
+.btn-danger:focus {
+  @apply outline-none ring-2 ring-red-500/50;
+}
+
+.btn-success {
+  @apply px-4 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 font-medium rounded-lg transition duration-300 border border-green-600/30 shadow-md;
+}
+
+.btn-success:focus {
+  @apply outline-none ring-2 ring-green-500/50;
+}
+
+/* ============================================================================
+   CARD COMPONENTS - Flexible Container Styling
+   ============================================================================ */
+
+.card {
+  @apply bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 transition duration-300 hover:shadow-lg hover:border-blue-500/30;
+}
+
+.card-hover {
+  @apply hover:-translate-y-1 hover:shadow-xl hover:border-blue-500/50;
+}
+
+.card-header {
+  @apply px-6 py-4 border-b border-slate-700/50 flex items-center justify-between;
+}
+
+.card-body {
+  @apply p-6;
+}
+
+.card-footer {
+  @apply px-6 py-4 border-t border-slate-700/50 flex items-center justify-between;
+}
+
+/* ============================================================================
+   FORM ELEMENTS - Professional Input & Control Styling
+   ============================================================================ */
+
+.input-field {
+  @apply w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/70 focus:bg-slate-800/70 focus:ring-2 focus:ring-blue-500/20 transition duration-300 shadow-sm;
+}
+
+.input-field::placeholder {
+  @apply text-zinc-600;
+}
+
+.input-field:disabled {
+  @apply opacity-50 cursor-not-allowed bg-slate-800/30;
+}
+
+.input-field:aria-invalid {
+  @apply border-red-600/70 focus:border-red-500;
+}
+
+.textarea-field {
+  @apply w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/70 focus:bg-slate-800/70 focus:ring-2 focus:ring-blue-500/20 transition duration-300 resize-none;
+}
+
+.textarea-field:disabled {
+  @apply opacity-50 cursor-not-allowed bg-slate-800/30;
+}
+
+/* ============================================================================
+   BADGE & STATUS INDICATORS - Professional Labels
+   ============================================================================ */
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition duration-200;
+}
+
+.badge-success {
+  @apply bg-green-900/40 text-green-300 border border-green-800/60 hover:bg-green-900/60;
+}
+
+.badge-error {
+  @apply bg-red-900/40 text-red-300 border border-red-800/60 hover:bg-red-900/60;
+}
+
+.badge-warning {
+  @apply bg-yellow-900/40 text-yellow-300 border border-yellow-800/60 hover:bg-yellow-900/60;
+}
+
+.badge-info {
+  @apply bg-blue-900/40 text-blue-300 border border-blue-800/60 hover:bg-blue-900/60;
+}
+
+.badge-processing {
+  @apply bg-purple-900/40 text-purple-300 border border-purple-800/60 hover:bg-purple-900/60;
+}
+
+/* Status indicator dot */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+}
+
+.status-dot-success {
+  @apply bg-green-400;
+}
+
+.status-dot-error {
+  @apply bg-red-400;
+}
+
+.status-dot-warning {
+  @apply bg-yellow-400;
+}
+
+.status-dot-info {
+  @apply bg-blue-400;
+}
+
+/* ============================================================================
+   ANIMATIONS - Professional Motion & Transitions
+   ============================================================================ */
+
+/* Smooth global transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Glow effect for highlights */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+  }
+}
+
+/* Float effect for emphasis */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Pulse glow effect */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  
+/* Syntax highlight theme (requires highlight.js) */
+@import "highlight.js/styles/github-dark.css";
+}
+
+/* Fade and scale entrance */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Slide from left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide from right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Bounce effect */
+@keyframes bounce-in {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Apply animation utility classes */
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%);
+  background-size: 1000px 100%;
+}
+
+.glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.fade-in-scale {
+  animation: fadeInScale 0.4s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+/* ============================================================================
+   ACCESSIBILITY - Focus & Interactive States
+   ============================================================================ */
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  @apply outline-none ring-2 ring-blue-500/70 ring-offset-2 ring-offset-slate-950;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  @apply absolute -top-full left-0 bg-blue-600 text-white px-4 py-2 rounded-md focus:top-0 transition-all;
+}
+
+/* Improved placeholder visibility */
+::placeholder {
+  @apply text-slate-500 opacity-100;
+}
+
+/* ============================================================================
+   UTILITY CLASSES - Additional Professional Helpers
+   ============================================================================ */
+
+/* Divider lines */
+.divider {
+  @apply border-t border-slate-700/50;
+}
+
+/* Smooth scroll behavior */
+html {
+  @apply scroll-smooth;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-blue-600/40 text-blue-100;
+}
+
+/* Custom scrollbar for whole page */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-600;
+}
+
+
+/* Shadow Effects */
+.shadow-glow-sm {
+  @apply shadow-lg;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+}
+
+.shadow-glow-md {
+  @apply shadow-xl;
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
+}
+
+.shadow-glow-lg {
+  @apply shadow-2xl;
+  box-shadow: 0 16px 32px rgba(59, 130, 246, 0.35);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+}
+
+/* Table Styling */
+.table-header {
+  @apply bg-gradient-to-r from-slate-800/50 via-slate-800/40 to-slate-900/50 border-b border-slate-700/50 font-semibold text-slate-200 sticky top-0 z-10;
+}
+
+.table-row {
+  @apply border-b border-slate-700/30 hover:bg-blue-950/20 transition duration-300 cursor-pointer;
+}
+
+.table-row:hover {
+  @apply border-blue-600/30;
+}
+
+.table-cell {
+  @apply px-4 py-3;
+}
+
+.table-cell-header {
+  @apply font-semibold text-slate-200;
+}
+
+/* Status Indicators */
+.status-online {
+  @apply w-2 h-2 rounded-full bg-green-500 animate-pulse;
+}
+
+.status-offline {
+  @apply w-2 h-2 rounded-full bg-zinc-500;
+}
+
+.status-idle {
+  @apply w-2 h-2 rounded-full bg-yellow-500;
+}
+
+.status-busy {
+  @apply w-2 h-2 rounded-full bg-red-500 animate-pulse;
+}
+
+/* Smooth Transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+body {
+  @apply bg-gradient-to-br from-slate-950 to-slate-950;
+}
+
+/* Utilities */
+.truncate-lines-2 {
+  @apply line-clamp-2;
+}
+
+.truncate-lines-3 {
+  @apply line-clamp-3;
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3)) padding-box,
+              linear-gradient(to right, #3b82f6, #8b5cf6) border-box;
+  border: 1px solid transparent;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Text Shadow for better legibility */
+.text-shadow-glow {
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Backdrop blur for modern look */
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-blue-500/50;
+}
+
+/* Gallery Color Swatch - Dynamic color with CSS variables */
+.gallery-color-swatch {
+  background-color: var(--swatch-color, #8b5cf6);
+  transition: background-color 0.3s ease;
+}

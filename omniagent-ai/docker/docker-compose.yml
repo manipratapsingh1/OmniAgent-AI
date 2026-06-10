@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  chroma:
+    image: chromadb/chroma:0.5.5
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    ports: ["8001:8000"]
+    volumes: ["chromadata:/chroma/chroma"]
+
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: ["ollamadata:/root/.ollama"]
+    # Models pulled via scripts/pull_models.sh after first start
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file: ../.env
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      chroma: { condition: service_started }
+      ollama: { condition: service_started }
+    ports: ["8000:8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    depends_on: [api]
+    ports: ["5173:80"]
+
+volumes:
+  pgdata: {}
+  chromadata: {}
+  ollamadata: {}
