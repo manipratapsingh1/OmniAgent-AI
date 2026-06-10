@@ -1,350 +1,430 @@
-<<<<<<< HEAD
-# 🧠 OmniAgent AI - Advanced Multi-Agent System
+# 🚀 OmniAgent AI 2.0 - Production-Grade Multi-Agent System
 
-A comprehensive **God-Level AI System** with 11 cutting-edge features including multi-agent intelligence, long-term memory, RAG knowledge base, tool integration, task automation, and developer assistance.
+> Advanced AI System with Authentication, RAG, Multi-Agent Intelligence, Task Automation, Study Assistant, and Modern UI/UX
 
-## 🌟 Features
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg) ![Python](https://img.shields.io/badge/python-3.11+-blue.svg) ![React](https://img.shields.io/badge/react-18+-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-### 1. 🤖 **Multi-Agent Intelligence**
-- **Planner Agent**: Breaks down complex problems into actionable steps
-- **Executor Agent**: Executes each step methodically
-- **Verifier Agent**: Quality checks with 0.0-1.0 scoring (0.85+ = pass)
-- LangGraph-based workflow with deterministic routing
+## ✨ What's New in v2.0
 
-### 2. 🧠 **Long-Term Memory System**
-- Persistent conversation history
-- User preferences & personalization
-- Context-aware responses
-- Memory retrieval for smarter interactions
+- ✅ **JWT Authentication** - Secure user login & registration
+- ✅ **PostgreSQL/SQLite** - Persistent data storage
+- ✅ **Comprehensive Logging** - Structured JSON logging for production
+- ✅ **Rate Limiting** - DDoS protection & API throttling
+- ✅ **Input Validation** - Pydantic models for all endpoints
+- ✅ **Streaming Responses** - Token-by-token real-time chat
+- ✅ **Modern Frontend** - ChatGPT-like UI with dark theme
+- ✅ **AI Study Assistant** - UPSC/CDS exam prep module
+- ✅ **File Upload** - Upload PDFs to RAG knowledge base
+- ✅ **Production Ready** - Docker, monitoring, error handling
 
-### 3. 📚 **RAG (Retrieval Augmented Generation)**
-- Upload PDFs, documents, and notes
-- Vector-based semantic search
-- Document summarization
-- Knowledge-based answers (not generic)
+## 🌟 Core Features
 
-### 4. 🛠️ **Tool Integration**
-- **Calculator**: Mathematical expressions
-- **Web Search**: Google Custom Search API
-- **Weather**: Real-time weather data
-- **Code Execution**: Safe Python execution
-- **Unit Conversion**: Temperature, distance, weight
-- **API Calls**: Whitelisted API integration
+### 🔐 Authentication & Security
+- JWT-based token authentication
+- Secure password hashing (bcrypt)
+- Refresh token mechanism
+- Rate limiting (DoS protection)
+- Comprehensive audit logging
 
-### 5. 📅 **Task Automation Engine**
-- Task management (create, update, delete)
-- Priority levels (high/medium/low)
-- Due dates and reminders
-- Recurring tasks (daily/weekly/monthly)
-- Task status tracking
+### 🤖 Multi-Agent Intelligence
+- **Planner**: Breaks down complex problems
+- **Executor**: Methodical step execution
+- **Verifier**: Quality gates (0.0-1.0 scoring)
+- LangGraph workflow
+- Intelligent retry logic
 
-### 6. 💻 **Developer Assistant Mode**
-- Code analysis (syntax, complexity, dependencies)
-- Code explanation
-- Refactoring suggestions
+### 📚 RAG Knowledge Base
+- PDF/document upload
+- Vector embeddings (OpenAI/Transformers)
+- ChromaDB/FAISS storage
+- Semantic search
+- Document chunking & retrieval
+
+### 💾 Database & Persistence
+- PostgreSQL support
+- SQLite for development
+- User management
+- Conversation history
+- Document tracking
+- API audit logs
+
+### 🧠 Memory & Context
+- Persistent conversation memory
+- User preferences
+- Smart context retrieval
+- Personalized responses
+
+### 📅 Task Automation
+- CRUD operations
+- Priority levels (1-5)
+- Due dates & reminders
+- Recurring tasks
+- Status tracking
+
+### 💻 Developer Assistant
+- Code analysis & complexity
+- Multi-language support
 - Security analysis
-- Support for Python, JavaScript, Java, C++, Go
+- Refactoring suggestions
 
-### 7. 🔧 **Modular Architecture**
-- Clean separation of concerns
-- Easy to add/remove features
-- Plug-and-play components
-- Scalable design
+### 📖 AI Study Assistant
+- UPSC/CDS exam prep
+- Subject-wise materials
+- Practice questions
+- Mock tests
+- Performance tracking
 
-### 8. ⚡ **Context-Aware Responses**
-- Uses previous conversations
-- User preferences matter
-- Adaptive tone and expertise level
-- Smart tool selection
+### 📊 Real-Time Features
+- Server-Sent Events streaming
+- WebSocket support
+- Async endpoints
+- Real-time chat
 
-### 9. 🌐 **API-Based System**
-- FastAPI backend (production-ready)
-- RESTful endpoints
-- WebSocket support for streaming
-- CORS enabled
-
-### 10. 🎯 **Smart Decision Making**
-- Intelligent agent routing
-- Tool selection based on context
-- Quality verification loop
-- Fallback mechanisms
-
-### 11. 🎨 **Beautiful UI**
-- Modern React frontend
-- Dark theme with gradients
-- Responsive design
-- Smooth animations
-- Real-time chat interface
+### 🛠️ Tool Integration
+- Calculator, Web Search
+- Weather API, Code Execution
+- Unit Conversion
+- API integration
 
 ## 🏗️ Architecture
 
 ```
-OmniAgent AI
-├── Backend (FastAPI)
+OmniAgent AI/
+├── Backend/
 │   ├── app/
-│   │   ├── agents/
-│   │   │   ├── nodes.py (Planner, Executor, Verifier)
-│   │   │   ├── graph.py (LangGraph workflow)
-│   │   │   └── state.py (Agent state management)
-│   │   ├── memory/
-│   │   │   └── memory_manager.py (Long-term storage)
-│   │   ├── knowledge/
-│   │   │   ├── rag_system.py (RAG with embeddings)
-│   │   │   └── code_analyzer.py (Code intelligence)
-│   │   ├── tools/
-│   │   │   └── tool_manager.py (Tool integration)
-│   │   └── automation/
-│   │       └── task_engine.py (Task & reminder engine)
-│   ├── main.py (API endpoints)
-│   └── requirements.txt
-├── Frontend (React)
+│   │   ├── agents/        # Multi-agent system
+│   │   ├── memory/        # Long-term memory
+│   │   ├── knowledge/     # RAG system
+│   │   ├── tools/         # Tool integration
+│   │   ├── automation/    # Task automation
+│   │   ├── database.py    # ORM models
+│   │   ├── auth.py        # Authentication
+│   │   └── logging_config.py
+│   ├── main.py            # FastAPI app
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
 │   ├── src/
-│   │   ├── App.js
-│   │   ├── pages/
-│   │   │   ├── Dashboard.js
-│   │   │   ├── ChatInterface.js
-│   │   │   ├── TaskManager.js
-│   │   │   ├── KnowledgeBase.js
-│   │   │   ├── CodeAssistant.js
-│   │   │   └── Settings.js
-│   │   ├── components/
-│   │   │   └── Navbar.js
-│   │   └── styles/
+│   │   ├── pages/         # React pages
+│   │   ├── components/    # Reusable components
+│   │   ├── context/       # State management
+│   │   ├── config.js
+│   │   └── App.js
+│   ├── Dockerfile
 │   └── package.json
 ├── docker-compose.yml
-└── .env (configuration)
+├── .env.example
+└── README.md
 ```
+
+## 📋 Requirements
+
+- Python 3.11+
+- Node.js 18+
+- Docker & Docker Compose (recommended)
+- PostgreSQL 15+ (optional)
+- Redis (optional, for caching)
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Docker & Docker Compose
-- OpenAI API Key
-- Google Custom Search API (optional)
-- OpenWeather API (optional)
-
-### 1. Clone & Setup
+### Option 1: Docker Compose (Recommended)
 
 ```bash
-cd /path/to/project
+# Clone & setup
+git clone <repo-url>
+cd OmniAgent
 cp .env.example .env
-# Edit .env with your API keys
+
+# Add API keys
+nano .env
+# OPENAI_API_KEY=sk_...
+
+# Start everything
+docker-compose up -d
+
+# Access
+# Frontend: http://localhost:3000
+# Backend: http://localhost:8000
+# Docs: http://localhost:8000/api/docs
 ```
 
-### 2. Start with Docker
+### Option 2: Local Development
 
-```bash
-docker-compose up --build
-```
+#### Backend
 
-Services will be available at:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-
-### 3. Manual Setup (Without Docker)
-
-**Backend**:
 ```bash
 cd Backend
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+python -c "from app.database import init_db; init_db()"
+uvicorn main:app --reload --port 8000
 ```
 
-**Frontend**:
+#### Frontend
+
 ```bash
 cd frontend
 npm install
-npm start
+npm start  # http://localhost:3000
 ```
 
-**Database** (separate terminals):
-```bash
-# PostgreSQL
-docker run -e POSTGRES_PASSWORD=omniai123 -d -p 5432:5432 postgres:15
+## 🔑 Key Endpoints
 
-# Redis
-docker run -d -p 6379:6379 redis:alpine
+### Authentication
 ```
-
-## 📡 API Endpoints
+POST   /api/auth/register      # User registration
+POST   /api/auth/login         # User login
+POST   /api/auth/refresh       # Refresh token
+```
 
 ### Chat
-- `POST /chat` - Main chat endpoint
-- `WS /ws/chat/{conversation_id}` - WebSocket streaming
+```
+POST   /api/chat               # Send message
+POST   /api/chat/stream        # Stream response
+GET    /api/conversations      # Get history
+GET    /api/conversations/{id}/messages
+```
 
 ### Knowledge Base
-- `POST /upload-document` - Upload PDF/document
-- `GET /knowledge-base/{user_id}` - List documents
-- `POST /search-knowledge` - Search documents
+```
+POST   /api/documents/upload   # Upload PDF
+GET    /api/documents          # List documents
+POST   /api/search             # Search documents
+```
 
 ### Tasks
-- `POST /tasks/{user_id}` - Create task
-- `GET /tasks/{user_id}` - List tasks
-- `PUT /tasks/{task_id}` - Update task
-- `DELETE /tasks/{task_id}` - Delete task
+```
+POST   /api/tasks              # Create task
+GET    /api/tasks              # List tasks
+PUT    /api/tasks/{id}         # Update task
+DELETE /api/tasks/{id}         # Delete task
+```
 
 ### Code Analysis
-- `POST /analyze-code` - Analyze code
-- `POST /explain-code` - Explain code
-
-### Tools
-- `POST /calculate` - Calculator
-- `GET /search` - Web search
-- `GET /weather/{location}` - Weather
-
-### Preferences
-- `POST /preferences/{user_id}` - Save preferences
-- `GET /preferences/{user_id}` - Get preferences
-
-## 🎯 Usage Examples
-
-### Example 1: Multi-Agent Task Solving
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user_123",
-    "conversation_id": "conv_123",
-    "message": "Create a plan to build a web scraper in Python"
-  }'
+```
+POST   /api/code/analyze       # Analyze code
 ```
 
-Response: Planner creates steps → Executor implements → Verifier checks
-
-### Example 2: Upload and Query Knowledge
-```bash
-# Upload PDF
-curl -X POST http://localhost:8000/upload-document?user_id=user_123 \
-  -F "file=@document.pdf"
-
-# Search knowledge base
-curl "http://localhost:8000/search-knowledge?user_id=user_123&query=machine%20learning"
+### System
+```
+GET    /api/health             # Health check
+GET    /api/stats              # User statistics
 ```
 
-### Example 3: Code Analysis
-```bash
-curl -X POST http://localhost:8000/analyze-code \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "def hello():\n  print(\"Hello\")",
-    "language": "python",
-    "analysis_type": "full"
-  }'
-```
+## 📚 Environment Variables
 
-## 🔧 Configuration
-
-### Environment Variables (.env)
 ```env
+# Database
+DATABASE_URL=sqlite:///./omniai.db
+# PostgreSQL: postgresql+psycopg2://user:pass@host/db
+
+# API Keys
 OPENAI_API_KEY=sk_...
-GOOGLE_API_KEY=AIza...
-DATABASE_URL=postgresql://user:password@localhost/omniai
-REDIS_URL=redis://localhost:6379/0
+GOOGLE_API_KEY=...
+OPENWEATHER_API_KEY=...
+
+# Security
+SECRET_KEY=your-secret-key
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Server
+PORT=8000
+WORKERS=4
+LOG_LEVEL=INFO
+ENVIRONMENT=development
+
+# CORS
+CORS_ORIGINS=http://localhost:3000
+
+# Features
+ENABLE_RAG=true
+ENABLE_STREAMING=true
+ENABLE_MEMORY=true
 ```
 
-### Customize Agent Behavior
-Edit [Backend/app/agents/nodes.py](Backend/app/agents/nodes.py):
-- Adjust LLM temperature
-- Change verification threshold
-- Modify routing logic
+## 📖 Usage Examples
 
-## 📊 Database Schema
+### 1. Register & Login
 
-**Tables**:
-- `conversation_memory` - Chat history
-- `user_preferences` - User settings
-- `knowledge_base` - Uploaded documents
-- `tasks` - Task management
-- `schedules` - Recurring tasks
-- `reminders` - Task reminders
+```bash
+# Register
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "user123",
+    "email": "user@example.com",
+    "password": "secure_password",
+    "full_name": "John Doe"
+  }'
 
-## 🛡️ Security Features
+# Login
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "user123",
+    "password": "secure_password"
+  }'
+```
 
-- ✅ API whitelisting for tool calls
-- ✅ Restricted code execution environment
-- ✅ CORS protection
-- ✅ Database query parameterization
-- ✅ Input validation
-- ✅ Rate limiting ready
+### 2. Chat with AI
 
-## 📈 Performance
+```bash
+curl -X POST http://localhost:8000/api/chat \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": "conv_123",
+    "message": "Explain machine learning",
+    "use_memory": true,
+    "use_rag": true
+  }'
+```
 
-- **Chat Response**: ~2-3 seconds (with LLM)
-- **Knowledge Search**: ~200ms
-- **Code Analysis**: ~1-2 seconds
-- **Concurrent Users**: 1000+ (with load balancing)
+### 3. Upload Document
+
+```bash
+curl -X POST http://localhost:8000/api/documents/upload \
+  -H "Authorization: Bearer {token}" \
+  -F "file=@document.pdf"
+```
+
+### 4. Create Task
+
+```bash
+curl -X POST http://localhost:8000/api/tasks \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Learn FastAPI",
+    "description": "Complete FastAPI tutorial",
+    "priority": 4,
+    "due_date": "2025-12-31T23:59:59"
+  }'
+```
 
 ## 🧪 Testing
 
 ```bash
 # Backend tests
 cd Backend
-pytest tests/
+pytest tests/ -v
 
 # Frontend tests
 cd frontend
 npm test
 ```
 
-## 📚 Documentation
+## 📦 Deployment
 
-- [API Documentation](http://localhost:8000/docs)
-- [Code Architecture](./ARCHITECTURE.md)
-- [Development Guide](./DEVELOPMENT.md)
+### Heroku
+```bash
+heroku create omniai-app
+heroku addons:create heroku-postgresql:standard-0
+heroku config:set OPENAI_API_KEY=sk_...
+git push heroku main
+```
+
+### Railway
+```bash
+railway init
+railway add postgres
+railway up
+```
+
+### AWS/Digital Ocean
+```bash
+docker build -t omniai .
+docker tag omniai:latest your-registry/omniai
+docker push your-registry/omniai
+```
+
+## 📊 Monitoring
+
+```bash
+# View logs
+docker logs omniai_backend -f
+docker logs omniai_frontend -f
+
+# API metrics
+curl http://localhost:8000/api/stats
+
+# Database status
+psql -U omniai -d omniai -c "SELECT * FROM users;"
+```
 
 ## 🐛 Troubleshooting
 
-**Issue**: "PostgreSQL connection failed"
-- Solution: Check DATABASE_URL, ensure postgres is running
+### Port Already in Use
+```bash
+# Find process
+lsof -i :8000
 
-**Issue**: "OpenAI API error"
-- Solution: Verify OPENAI_API_KEY is set correctly
+# Kill process
+kill -9 <PID>
+```
 
-**Issue**: "Frontend can't reach backend"
-- Solution: Check CORS_ORIGINS, ensure backend is running on 8000
+### Database Connection Error
+```bash
+# Reset database
+rm omniai.db
+python -c "from app.database import init_db; init_db()"
+```
+
+### Frontend Not Loading
+```bash
+# Clear cache
+rm -rf node_modules package-lock.json
+npm install
+npm start
+```
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
 1. Fork repository
-2. Create feature branch
-3. Submit pull request
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push branch (`git push origin feature/amazing`)
+5. Open Pull Request
 
-## 📄 License
+## 📚 Documentation
 
-MIT License - see LICENSE file
+- [API Documentation](./docs/API.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
+- [Architecture Overview](./ARCHITECTURE.md)
+- [Setup Guide](./SETUP.md)
 
-## 🎓 Learning Resources
+## 📝 License
 
-- [LangChain Documentation](https://langchain.readthedocs.io/)
-- [LangGraph Tutorial](https://langchain-ai.github.io/langgraph/)
-- [FastAPI Guide](https://fastapi.tiangolo.com/)
-- [React Hooks](https://react.dev/reference/react)
+MIT License - See [LICENSE](./LICENSE) file
+
+## 🙏 Acknowledgments
+
+- [LangChain](https://langchain.com/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [React](https://react.dev/)
+- [ChromaDB](https://trychroma.com/)
+- [OpenAI](https://openai.com/)
 
 ## 📞 Support
 
-- 🐛 Issues: GitHub Issues
-- 💬 Discussions: GitHub Discussions
-- 📧 Email: support@omniai.local
+- 📧 Email: support@omniai.dev
+- 🐛 [GitHub Issues](https://github.com/omniai/issues)
+- 💬 [Discussions](https://github.com/omniai/discussions)
 
-## 🎉 Roadmap
+## 🚀 Roadmap
 
-- [ ] Fine-tuned models
-- [ ] Multi-language support
-- [ ] Mobile app
-- [ ] Advanced analytics
-- [ ] Custom model training
-- [ ] Team collaboration
-- [ ] Enterprise features
+- [ ] Mobile App (React Native)
+- [ ] Voice Chat
+- [ ] Advanced Analytics
+- [ ] Custom LLM Support
+- [ ] Multi-language UI
+- [ ] Offline Mode
+- [ ] Team Collaboration
+- [ ] Advanced RAG Features
 
 ---
 
-**Built with ❤️ using Python, FastAPI, React, and LangChain**
+**Made with ❤️ by OmniAgent Team**
 
-🚀 **Ready to build the future of AI?**
-=======
-# OmniAgent-AI
->>>>>>> 3055ebab0ecbc7a70c11215102c9bae54d8f13d3
+*Last Updated: May 2025*
