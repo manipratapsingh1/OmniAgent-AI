@@ -37,7 +37,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev,production]"
-          pip install duckduckgo-search
 
       - name: Lint
         run: ruff check app tests --select E,F,W --ignore E501 || true
