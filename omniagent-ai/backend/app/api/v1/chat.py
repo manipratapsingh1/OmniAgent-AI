@@ -38,18 +38,20 @@ def _normalize_token(token) -> str:
         return token
 
     if isinstance(token, dict):
-        for key in ("response", "message", "token", "text", "content"):
-            value = token.get(key)
-            if value:
-                return str(value)
-
-        # Sometimes Ollama-style chunks can contain nested message content
+        # Check nested message structure first
         message = token.get("message")
         if isinstance(message, dict):
             for key in ("content", "text", "response"):
                 value = message.get(key)
-                if value:
+                if value is not None:
                     return str(value)
+
+        for key in ("response", "message", "token", "text", "content"):
+            value = token.get(key)
+            if value is not None:
+                if isinstance(value, dict):
+                    continue
+                return str(value)
 
     return str(token)
 
@@ -78,6 +80,25 @@ async def chat(
     
     if cached_response and not req.force_fresh:
         return cached_response
+
+    # Try semantic cache
+    if not req.force_fresh:
+        from app.utils.semantic_cache import semantic_cache
+        try:
+            cached_answer = await semantic_cache.get(req.message)
+            if cached_answer:
+                response = ChatResponse(
+                    conversation_id=req.conversation_id or 0,
+                    message_id=0,
+                    content=cached_answer,
+                    sources=[],
+                    trace=[]
+                )
+                _cache.set(cache_key, response, ttl=300)
+                return response
+        except Exception:
+            pass
+
     # instrument chat endpoint
     try:
         app_metrics.CHAT_REQUESTS.labels(endpoint="chat").inc()
@@ -92,6 +113,15 @@ async def chat(
     
     # Cache the response (5-minute TTL for identical queries)
     _cache.set(cache_key, response, ttl=300)
+
+    # Store in semantic cache
+    if response and response.content:
+        from app.utils.semantic_cache import semantic_cache
+        try:
+            await semantic_cache.set(req.message, response.content)
+        except Exception:
+            pass
+
     try:
         if t0 is not None:
             app_metrics.CHAT_LATENCY.labels(endpoint="chat").observe(time.time() - t0)
@@ -115,8 +145,17 @@ async def chat_stream(
     service = FastChatService(db)
 
     async def gen():
-        async for event in service.stream(user.id, req):
-            yield json.dumps(event) + "\n"
+        try:
+            async for event in service.stream(user.id, req):
+                yield json.dumps(event) + "\n"
+        except Exception as e:
+            import structlog
+            log = structlog.get_logger("chat_stream")
+            log.error("chat_stream.failed", error=str(e))
+            yield json.dumps({
+                "type": "error",
+                "data": {"message": f"Error: {str(e)[:100]}"}
+            }) + "\n"
 
     return StreamingResponse(gen(), media_type="application/x-ndjson")
 

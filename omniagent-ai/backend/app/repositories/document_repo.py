@@ -75,6 +75,12 @@ class DocumentRepo(BaseRepo[Document]):
             for chunk in chunks:
                 self.session.delete(chunk)
             
+            # Delete referencing StudyMaterial records (which lack CASCADE)
+            from app.models.knowledge import StudyMaterial
+            materials = self.session.exec(select(StudyMaterial).where(StudyMaterial.document_id == doc_id)).all()
+            for material in materials:
+                self.session.delete(material)
+            
             # Delete the document
             self.session.delete(doc)
             self.session.commit()

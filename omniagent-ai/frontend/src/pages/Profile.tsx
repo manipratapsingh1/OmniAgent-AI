@@ -22,6 +22,10 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    document.title = "Profile | OmniAgent AI";
+  }, []);
+
+  useEffect(() => {
     if (user) {
       setProfile(user as UserProfile);
       setFormData({ full_name: user.full_name || "" });
@@ -77,6 +81,7 @@ export default function Profile() {
           <div className="space-y-6">
             {/* Email */}
             <div>
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="flex items-center gap-2 text-sm font-semibold text-zinc-400 mb-2">
                 <FiMail className="text-blue-400" />
                 Email Address
@@ -88,6 +93,7 @@ export default function Profile() {
 
             {/* Full Name */}
             <div>
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="flex items-center gap-2 text-sm font-semibold text-zinc-400 mb-2">
                 <FiUser className="text-blue-400" />
                 Full Name
@@ -113,6 +119,7 @@ export default function Profile() {
 
             {/* Member Since */}
             <div>
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="text-sm font-semibold text-zinc-400 mb-2 block">
                 Member Since
               </label>

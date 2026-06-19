@@ -1,7 +1,8 @@
 // Code Interpreter - Execute Python code safely
 import React, { useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Play, Copy, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../api/client';
 
 interface CodeEditorProps {
   onResult: (result: unknown) => void;
@@ -19,7 +20,7 @@ const CodeEditor = ({ onResult }: CodeEditorProps) => {
       setError('');
       setOutput('');
 
-      const response = await axios.post('/api/v1/tools/execute-code', {
+      const response = await api.post('/tools/execute-code', {
         code,
       });
 

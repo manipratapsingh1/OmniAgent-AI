@@ -1,7 +1,7 @@
 // Data Visualizer - Generate beautiful charts
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../api/client';
 
 interface DataVisualizerProps {
   onResult: (result: unknown) => void;
@@ -65,7 +65,7 @@ const DataVisualizer = ({ onResult }: DataVisualizerProps) => {
       setLoading(true);
       setError('');
 
-      const response = await axios.post('/api/v1/tools/generate-chart', {
+      const response = await api.post('/tools/generate-chart', {
         data,
         chart_type: chartType,
       });

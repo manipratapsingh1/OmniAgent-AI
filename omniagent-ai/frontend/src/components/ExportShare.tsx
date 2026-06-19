@@ -1,7 +1,7 @@
 // Export & Share Conversations
 import React, { useState } from 'react';
 import { Download, Share2, Copy, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../api/client';
 
 interface ExportShareProps {
   conversationId: number;
@@ -28,8 +28,8 @@ const ExportShare = ({ conversationId, onResult }: ExportShareProps) => {
       setLoading(true);
       setError('');
 
-      const response = await axios.post(
-        `/api/v1/tools/export-conversation?conv_id=${conversationId}&format=${exportFormat}`
+      const response = await api.post(
+        `/tools/export-conversation?conv_id=${conversationId}&format=${exportFormat}`
       );
 
       setContent(response.data.content);
@@ -59,8 +59,8 @@ const ExportShare = ({ conversationId, onResult }: ExportShareProps) => {
       setLoading(true);
       setError('');
 
-      const response = await axios.post(
-        `/api/v1/tools/share-conversation?conv_id=${conversationId}`,
+      const response = await api.post(
+        `/tools/share-conversation?conv_id=${conversationId}`,
         {
           public: isPublic,
         }
@@ -83,9 +83,11 @@ const ExportShare = ({ conversationId, onResult }: ExportShareProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getFormatPressed = (value: string): boolean =>
     exportFormat === value;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const publicChecked = isPublic ? 'true' : 'false';
 
   return (
@@ -99,6 +101,7 @@ const ExportShare = ({ conversationId, onResult }: ExportShareProps) => {
 
         {/* Format Selection */}
         <div>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="text-xs font-semibold text-gray-400 block mb-2">
             FORMAT
           </label>

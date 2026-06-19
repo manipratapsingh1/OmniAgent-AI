@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useNotificationStore } from "../store/notificationStore";
@@ -8,6 +8,10 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 
 export default function Login() {
+  useEffect(() => {
+    document.title = "Login | OmniAgent AI";
+  }, []);
+
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -239,6 +243,7 @@ export default function Login() {
                     fullWidth
                     isLoading={loading}
                     disabled={loading}
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     onClick={(e) => {
                       // Form submission is handled by the form tag
                     }}
@@ -267,6 +272,7 @@ export default function Login() {
                   className="text-center"
                 >
                   <p className="text-zinc-400">
+                    {/* eslint-disable-next-line react/no-unescaped-entities */}
                     Don't have an account?{" "}
                     <Link
                       to="/signup"

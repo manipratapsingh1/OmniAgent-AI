@@ -23,7 +23,16 @@ export interface Conversation {
   folder_name?: string | null;
 }
 export interface Message { id: number; role: 'user' | 'assistant'; content: string; sources?: string | Array<string | Citation>; created_at: string; agent?: string; }
-export interface Citation { document_id: number; chunk_index: number; snippet: string; filename?: string; }
+export interface Citation {
+  document_id: number;
+  chunk_index: number;
+  snippet: string;
+  filename?: string;
+  document_name?: string;
+  page_number?: number;
+  section?: string;
+  confidence_score?: number;
+}
 export interface AgentTrace { agent: string; input: string; output: string; latency_ms: number; }
 export interface ChatResponse { conversation_id: number; message_id: number; content: string; sources: Citation[]; trace: AgentTrace[]; }
 

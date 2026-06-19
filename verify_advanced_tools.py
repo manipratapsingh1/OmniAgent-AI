@@ -62,7 +62,7 @@ def verify_frontend():
         (base_path / "src/components/FileAnalyzer.tsx", "File Analyzer (FileAnalyzer.tsx)"),
         (base_path / "src/components/DataVisualizer.tsx", "Data Visualizer (DataVisualizer.tsx)"),
         (base_path / "src/components/ExportShare.tsx", "Export/Share (ExportShare.tsx)"),
-        (base_path / "src/components/ChatWindow.tsx", "Chat Integration (ChatWindow.tsx)"),
+        (base_path / "src/components/chat/ChatWindow.tsx", "Chat Integration (ChatWindow.tsx)"),
     ]
     
     for filepath, name in files:

@@ -66,7 +66,7 @@ class VectorStore:
                 )
                 # Test connection by attempting to list collections
                 _ = self.client.list_collections()
-                self.collection = self.client.get_or_create_collection("omniagent")
+                self.collection = self.client.get_or_create_collection("omniagent", metadata={"hnsw:space": "cosine"})
                 self._initialized = True
                 log.info(
                     "vector_store.initialized",
@@ -161,8 +161,10 @@ class VectorStore:
 
             start_time = time.time()
             
-            # Query with timeout protection using a simple approach
-            # Note: Chroma HTTP client doesn't have built-in timeout, so we add logging
+            # Format where filter for Chroma logical operators if it contains multiple conditions
+            if where and len(where) > 1 and not ("$and" in where or "$or" in where):
+                where = {"$and": [{k: v} for k, v in where.items()]}
+
             result = self.collection.query(
                 query_embeddings=[embedding],
                 n_results=k,
@@ -308,6 +310,8 @@ def _keyword_search_fallback(
         query_filters = [Document.id == DocumentChunk.document_id]
 
         if filters:
+            if filters.get("user_id") is not None:
+                query_filters.append(Document.user_id == filters["user_id"])
             if filters.get("document_id") is not None:
                 query_filters.append(DocumentChunk.document_id == filters["document_id"])
             if filters.get("status") is not None:
@@ -351,10 +355,20 @@ async def retrieve(
     try:
         # Prefer optimized retriever if available
         where: Dict[str, Any] = {}
-        if user_id is not None:
-            where["user_id"] = user_id
+        is_kb = filters and filters.get("is_knowledge_base")
+        if user_id is not None and not is_kb:
+            where["user_id"] = int(user_id)
         if filters:
-            where.update(filters)
+            # Ensure filter values are Chroma-compatible types
+            for fk, fv in filters.items():
+                if isinstance(fv, bool):
+                    where[fk] = fv
+                elif isinstance(fv, int):
+                    where[fk] = int(fv)
+                elif isinstance(fv, float):
+                    where[fk] = float(fv)
+                else:
+                    where[fk] = str(fv) if fv is not None else fv
 
         # Simple query-result caching: check Redis for previous results
         try:
@@ -385,25 +399,31 @@ async def retrieve(
                 elapsed = time.time() - t0
                 app_metrics.RETRIEVAL_LATENCY.labels(endpoint="optimized_retrieve").observe(elapsed)
 
-                # normalized output
-                out = [
-                    {
-                        "text": r.get("text"),
-                        "document_id": r.get("document_id"),
-                        "chunk_index": r.get("chunk_index"),
-                        "score": r.get("score", 0),
-                        "distance": r.get("distance", 0),
-                    }
-                    for r in results
-                ]
-                log.info(
-                    "retrieve.success.optimized",
-                    user_id=user_id,
-                    results=len(out),
-                    elapsed_ms=int(elapsed * 1000),
-                    top_score=out[0]["score"] if out else 0,
-                )
-                return out
+                if results:
+                    # normalized output
+                    out = [
+                        {
+                            "text": r.get("text"),
+                            "document_id": r.get("document_id"),
+                            "chunk_index": r.get("chunk_index"),
+                            "score": r.get("score", 0),
+                            "distance": r.get("distance", 0.0),
+                            "page_number": r.get("page_number"),
+                            "section": r.get("section"),
+                            "filename": r.get("filename"),
+                        }
+                        for r in results
+                    ]
+                    log.info(
+                        "retrieve.success.optimized",
+                        user_id=user_id,
+                        results=len(out),
+                        elapsed_ms=int(elapsed * 1000),
+                        top_score=out[0]["score"] if out else 0,
+                    )
+                    return out
+                else:
+                    log.info("retrieve.optimized_empty", user_id=user_id, query=query)
         except Exception as e:
             log.warning("retrieve.optimized_failed", error=str(e))
 
@@ -424,11 +444,15 @@ async def retrieve(
         app_metrics.RETRIEVAL_REQUESTS.labels(endpoint="fallback_retrieve").inc()
         t0 = time.time()
 
-        res = query_vectors(
-            embedding=vecs[0],
-            k=k,
-            where=where,
-        )
+        try:
+            res = query_vectors(
+                embedding=vecs[0],
+                k=k,
+                where=where,
+            )
+        except Exception as qe:
+            log.warning("retrieve.vector_query_failed", error=str(qe))
+            res = {"documents": [[]], "metadatas": [[]], "distances": [[]]}
 
         elapsed = time.time() - t0
         app_metrics.RETRIEVAL_LATENCY.labels(endpoint="fallback_retrieve").observe(elapsed)
@@ -444,17 +468,22 @@ async def retrieve(
             elapsed_ms=int(elapsed * 1000),
         )
 
-        # Combine and score results (lower distance -> higher score)
         for i, (text, meta) in enumerate(zip(docs, metas)):
-            score = 1.0 - (distances[i] if i < len(distances) else 0.0)
+            dist = distances[i] if i < len(distances) else 0.0
+            if dist < 0.0:
+                score = 1.0
+            elif dist <= 2.0:
+                score = 1.0 - dist
+            else:
+                score = 1.0 / (1.0 + dist / 10.0)
             # small recency boost if metadata contains timestamp
             try:
                 if meta and meta.get("created_at"):
                     # assume ISO timestamp - newer => small boost
-                    from datetime import datetime
+                    from datetime import datetime, timezone
 
                     created = datetime.fromisoformat(meta.get("created_at"))
-                    age_seconds = (datetime.utcnow() - created).total_seconds()
+                    age_seconds = (datetime.now(timezone.utc) - created).total_seconds()
                     # boost up to +0.1 for very recent docs
                     recency_boost = max(0.0, 0.1 - min(age_seconds / (60 * 60 * 24 * 30), 0.1))
                     score += recency_boost
@@ -467,6 +496,9 @@ async def retrieve(
                 "chunk_index": meta.get("chunk_index"),
                 "score": score,
                 "distance": distances[i] if i < len(distances) else 0.0,
+                "page_number": meta.get("page_number"),
+                "section": meta.get("section"),
+                "filename": meta.get("filename"),
             }
             out.append(result)
             
@@ -483,6 +515,24 @@ async def retrieve(
         # Sort by score desc
         out.sort(key=lambda x: x.get("score", 0), reverse=True)
 
+        # Hybrid search: fuse vector results with BM25 keyword results when DB available
+        if db is not None and out:
+            try:
+                from app.rag.hybrid_search import hybrid_merge, filter_irrelevant_chunks
+                keyword_results = _keyword_search_fallback(db, query, k, where)
+                if keyword_results:
+                    out = hybrid_merge(out, keyword_results, query, top_k=k)
+                    out = filter_irrelevant_chunks(out, query)
+                    log.info(
+                        "retrieve.hybrid_merged",
+                        user_id=user_id,
+                        vector_count=len(docs),
+                        keyword_count=len(keyword_results),
+                        fused_count=len(out),
+                    )
+            except Exception as e:
+                log.warning("retrieve.hybrid_merge_failed", error=str(e))
+
         log.info(
             "retrieve.success.fallback",
             user_id=user_id,
@@ -491,44 +541,22 @@ async def retrieve(
             elapsed_ms=int(elapsed * 1000),
         )
 
-        # Optional reranking step: use a fast model to score top candidates
+        # Lightweight BM25-based reranking (replaces slow Ollama-based reranking)
+        # The Ollama reranking was making sequential API calls per chunk and causing
+        # massive latency + contention with generation. BM25 reranking is instant.
         try:
-            rerank_top_k = min(6, len(out))
-            if rerank_top_k > 1:
-                candidates = out[:rerank_top_k]
-
-                async def _score_candidate(text: str) -> float:
-                    try:
-                        prompt = (
-                            f"Rate the relevance of the following document chunk to the query on a scale 0.0-1.0. "
-                            f"Return only a single decimal number.\n\nQuery: {query}\n\nChunk:\n{text[:800]}"
-                        )
-                        resp = await ollama.generate(prompt=prompt, model=getattr(_settings, "FAST_RAG_MODEL", "phi3:mini"))
-                        # parse float from response
-                        import re
-                        m = re.search(r"([0-9]*\.?[0-9]+)", resp)
-                        if m:
-                            return float(m.group(1))
-                    except Exception:
-                        pass
-                    return 0.0
-
-                # Score candidates sequentially (small k)
-                scored = []
-                for c in candidates:
-                    s = await _score_candidate(c.get("text") or "")
-                    scored.append((s, c))
-
-                # Replace scores and sort
-                for s, c in scored:
-                    c["score"] = s
-
-                out.sort(key=lambda x: x.get("score", 0), reverse=True)
+            from app.rag.hybrid_search import bm25_score
+            for item in out:
+                text = item.get("text") or ""
+                bm25 = bm25_score(query, text)
+                # Blend vector score with BM25 for better relevance
+                item["score"] = item.get("score", 0) * 0.7 + min(bm25 * 0.01, 0.3)
+            out.sort(key=lambda x: x.get("score", 0), reverse=True)
         except Exception:
             pass
 
         if (not out or (out and out[0].get("score", 0) < 0.2)) and db is not None:
-            fallback = _keyword_search_fallback(db, query, k, filters)
+            fallback = _keyword_search_fallback(db, query, k, where)
             if fallback:
                 log.info(
                     "retrieve.keyword_fallback",

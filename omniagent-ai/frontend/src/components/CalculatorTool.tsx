@@ -1,7 +1,8 @@
 // Advanced Calculator with scientific functions
 import React, { useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { RotateCcw, Copy } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../api/client';
 
 interface CalculatorToolProps {
   onResult: (result: unknown) => void;
@@ -21,7 +22,7 @@ const CalculatorTool = ({ onResult }: CalculatorToolProps) => {
     if (!expression.trim()) return;
 
     try {
-      const response = await axios.post('/api/v1/tools/calculate', {
+      const response = await api.post('/tools/calculate', {
         expression,
       });
 
@@ -103,10 +104,9 @@ const CalculatorTool = ({ onResult }: CalculatorToolProps) => {
           </button>
         ))}
       </div>
-
       {/* Calculator Buttons */}
       <div className="grid grid-cols-4 gap-2">
-        {buttons.map((row, i) =>
+        {buttons.map((row) =>
           row.map((btn) => (
             <button
               key={btn}

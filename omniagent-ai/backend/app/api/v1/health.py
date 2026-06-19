@@ -60,7 +60,7 @@ async def readyz():
     try:
         redis_client = redis.from_url(_settings.REDIS_URL, socket_connect_timeout=2)
         await asyncio.wait_for(redis_client.ping(), timeout=2.0)
-        await redis_client.close()
+        await redis_client.aclose()
         checks["redis"] = True
         log.debug("health.redis.ok")
     except asyncio.TimeoutError:

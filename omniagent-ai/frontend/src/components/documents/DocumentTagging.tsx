@@ -13,12 +13,14 @@ export default function DocumentTagging({ documentId, initialTags = [], onTagsCh
   const [tags, setTags] = useState<string[]>(initialTags);
   const [newTag, setNewTag] = useState("");
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   useEffect(() => {
     loadTags();
     fetchCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {

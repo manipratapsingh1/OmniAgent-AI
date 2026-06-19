@@ -24,6 +24,13 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.APP_DEBUG)
     
+    # Run service availability checks
+    try:
+        from app.config import check_required_services
+        check_required_services(settings)
+    except Exception as check_err:
+        log.warning("app.startup.service_check_failed", error=str(check_err))
+
     # Initialize database and seed if needed
     log.info("app.startup", app=settings.APP_NAME, version="2.0.0")
     try:
@@ -134,7 +141,7 @@ def create_app() -> FastAPI:
     app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
     app.include_router(quota.router, prefix="/api/v1", tags=["quota"])
     app.include_router(search.router, prefix="/api/v1", tags=["search"])
-    app.include_router(features.router, prefix="/api/v1", tags=["features"])
+    app.include_router(features.router, prefix="/api/v1/features", tags=["features"])
     # Assistant router (feature-flagged)
     try:
         from app.api.v1 import assistant

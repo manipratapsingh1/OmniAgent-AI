@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 from app.deps import db_session, current_user
@@ -27,8 +27,7 @@ class APIKeyResponse(BaseModel):
     expires_at: Optional[str]
     last_used: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIKeyCreateResponse(APIKeyResponse):

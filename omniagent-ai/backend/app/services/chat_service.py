@@ -1,6 +1,6 @@
 import json
 import structlog
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import Session
 
@@ -69,7 +69,7 @@ class ChatService:
                 output=t.output[:4000], latency_ms=t.latency_ms,
             ))
 
-        conv.updated_at = datetime.utcnow()
+        conv.updated_at = datetime.now(timezone.utc)
         if conv.title == "New Conversation":
             conv.title = (req.message[:48] + ("…" if len(req.message) > 48 else ""))
         self.db.add(conv)

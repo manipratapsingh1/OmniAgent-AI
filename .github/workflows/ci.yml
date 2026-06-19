@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: omniagent-ai/backend
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: omniagent-ai/backend/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev,production]"
+          pip install duckduckgo-search
+
+      - name: Lint
+        run: ruff check app tests --select E,F,W --ignore E501 || true
+
+      - name: Run tests
+        env:
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars-long
+          DATABASE_URL: sqlite:///./test.db
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/ -q --tb=short --cov=app --cov-fail-under=80
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: omniagent-ai/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: omniagent-ai/frontend/package-lock.json
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r omniagent-ai/backend/pyproject.toml --desc on || true

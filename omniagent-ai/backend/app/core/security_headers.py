@@ -32,19 +32,28 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "payment=(), usb=()"
         )
         
-        # Content Security Policy (allow your frontend origin)
-        # Note: Update the connect-src to match your frontend domain
+        # Content Security Policy (allow configured frontend origins dynamically)
+        from app.config import get_settings
+        settings = get_settings()
+        cors_origins = [
+            origin.strip()
+            for origin in settings.CORS_ORIGINS.split(",")
+            if origin.strip()
+        ] if isinstance(settings.CORS_ORIGINS, str) else settings.CORS_ORIGINS
+        
+        origins_str = " ".join(cors_origins)
+        
         csp = (
-            "default-src 'self'; "
-            "script-src 'self' 'wasm-unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self' http://localhost:5173 https://yourdomain.com; "
-            "frame-ancestors 'none'; "
-            "form-action 'self'; "
-            "base-uri 'self'; "
-            "object-src 'none'"
+            f"default-src 'self'; "
+            f"script-src 'self' 'wasm-unsafe-eval'; "
+            f"style-src 'self' 'unsafe-inline'; "
+            f"img-src 'self' data: https:; "
+            f"font-src 'self' data:; "
+            f"connect-src 'self' {origins_str}; "
+            f"frame-ancestors 'none'; "
+            f"form-action 'self'; "
+            f"base-uri 'self'; "
+            f"object-src 'none'"
         )
         response.headers["Content-Security-Policy"] = csp
         

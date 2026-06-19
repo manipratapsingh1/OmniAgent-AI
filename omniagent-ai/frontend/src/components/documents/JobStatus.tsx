@@ -8,6 +8,7 @@ export default function JobStatus({ jobId }: { jobId: number | null }) {
     return await jobService.getJob(jobId);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, loading } = usePolling<any>(fetcher, { interval: 2000, enabled: !!jobId });
 
   if (!jobId) return null;

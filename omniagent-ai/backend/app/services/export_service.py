@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 import structlog
 import json
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timezone
 
 log = structlog.get_logger("export_service")
 
@@ -20,7 +20,7 @@ class ExportService:
         """Export conversation as Markdown."""
         try:
             md_content = f"# {title}\n\n"
-            md_content += f"**Exported:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            md_content += f"**Exported:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             md_content += "---\n\n"
             
             for msg in messages:
@@ -50,7 +50,7 @@ class ExportService:
         """Export conversation as JSON."""
         try:
             export_data = {
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(timezone.utc).isoformat(),
                 "metadata": metadata or {},
                 "messages": messages,
             }

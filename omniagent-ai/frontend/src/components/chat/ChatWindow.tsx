@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { 
   FiSend, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   FiLoader, 
   FiTrash2, 
   FiRepeat, 
   FiSettings, 
   FiImage, 
   FiXCircle,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   FiPaperclip
 } from "react-icons/fi";
 import { Code2 } from "lucide-react";
@@ -23,6 +25,10 @@ const providerOptions = [
   { value: "llama3.2", label: "Balanced (llama3.2)" },
   { value: "mistral", label: "Mistral" },
   { value: "llava", label: "Vision (llava)" },
+  { value: "gpt-4o", label: "OpenAI GPT-4o" },
+  { value: "claude-3-5-sonnet", label: "Anthropic Claude 3.5 Sonnet" },
+  { value: "gemini-1.5-pro", label: "Google Gemini 1.5 Pro" },
+  { value: "groq-llama-3-70b", label: "Groq LLaMA 3 70b" },
 ];
 
 const personaOptions = [
@@ -65,6 +71,7 @@ export default function ChatWindow() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -291,6 +298,16 @@ export default function ChatWindow() {
                 />
               </div>
             ))}
+            {loading && (
+              <div className="mb-4 flex justify-start">
+                <MessageBubble
+                  // eslint-disable-next-line jsx-a11y/aria-role
+                  role="assistant"
+                  content=""
+                  isThinking={true}
+                />
+              </div>
+            )}
             <div ref={messagesEndRef} className="h-4" />
           </div>
         )}
@@ -339,8 +356,12 @@ export default function ChatWindow() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="Ask anything... (Ctrl+Enter to send)"
-              className="w-full rounded-2xl border border-slate-800 bg-slate-900/80 px-5 py-4 pr-44 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all resize-none min-h-[60px] max-h-[200px] shadow-2xl backdrop-blur-sm"
+              className={`w-full rounded-2xl border bg-slate-900/80 px-5 py-4 pr-44 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all resize-none min-h-[60px] max-h-[200px] shadow-2xl backdrop-blur-sm ${
+                isFocused ? "border-blue-500/50 ring-2 ring-blue-500/30 shadow-glow-md" : "border-slate-800"
+              }`}
               rows={1}
             />
             

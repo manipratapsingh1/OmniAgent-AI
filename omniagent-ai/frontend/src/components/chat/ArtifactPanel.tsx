@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useStore } from "../../store";
 import { FiX, FiMaximize2, FiCode, FiEye, FiDownload, FiCopy } from "react-icons/fi";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ArtifactPanel() {

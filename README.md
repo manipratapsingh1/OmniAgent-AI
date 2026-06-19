@@ -1,430 +1,240 @@
-# 🚀 OmniAgent AI 2.0 - Production-Grade Multi-Agent System
-
-> Advanced AI System with Authentication, RAG, Multi-Agent Intelligence, Task Automation, Study Assistant, and Modern UI/UX
-
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg) ![Python](https://img.shields.io/badge/python-3.11+-blue.svg) ![React](https://img.shields.io/badge/react-18+-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
-
-## ✨ What's New in v2.0
-
-- ✅ **JWT Authentication** - Secure user login & registration
-- ✅ **PostgreSQL/SQLite** - Persistent data storage
-- ✅ **Comprehensive Logging** - Structured JSON logging for production
-- ✅ **Rate Limiting** - DDoS protection & API throttling
-- ✅ **Input Validation** - Pydantic models for all endpoints
-- ✅ **Streaming Responses** - Token-by-token real-time chat
-- ✅ **Modern Frontend** - ChatGPT-like UI with dark theme
-- ✅ **AI Study Assistant** - UPSC/CDS exam prep module
-- ✅ **File Upload** - Upload PDFs to RAG knowledge base
-- ✅ **Production Ready** - Docker, monitoring, error handling
-
-## 🌟 Core Features
-
-### 🔐 Authentication & Security
-- JWT-based token authentication
-- Secure password hashing (bcrypt)
-- Refresh token mechanism
-- Rate limiting (DoS protection)
-- Comprehensive audit logging
-
-### 🤖 Multi-Agent Intelligence
-- **Planner**: Breaks down complex problems
-- **Executor**: Methodical step execution
-- **Verifier**: Quality gates (0.0-1.0 scoring)
-- LangGraph workflow
-- Intelligent retry logic
-
-### 📚 RAG Knowledge Base
-- PDF/document upload
-- Vector embeddings (OpenAI/Transformers)
-- ChromaDB/FAISS storage
-- Semantic search
-- Document chunking & retrieval
-
-### 💾 Database & Persistence
-- PostgreSQL support
-- SQLite for development
-- User management
-- Conversation history
-- Document tracking
-- API audit logs
-
-### 🧠 Memory & Context
-- Persistent conversation memory
-- User preferences
-- Smart context retrieval
-- Personalized responses
-
-### 📅 Task Automation
-- CRUD operations
-- Priority levels (1-5)
-- Due dates & reminders
-- Recurring tasks
-- Status tracking
-
-### 💻 Developer Assistant
-- Code analysis & complexity
-- Multi-language support
-- Security analysis
-- Refactoring suggestions
-
-### 📖 AI Study Assistant
-- UPSC/CDS exam prep
-- Subject-wise materials
-- Practice questions
-- Mock tests
-- Performance tracking
-
-### 📊 Real-Time Features
-- Server-Sent Events streaming
-- WebSocket support
-- Async endpoints
-- Real-time chat
-
-### 🛠️ Tool Integration
-- Calculator, Web Search
-- Weather API, Code Execution
-- Unit Conversion
-- API integration
-
-## 🏗️ Architecture
-
-```
-OmniAgent AI/
-├── Backend/
-│   ├── app/
-│   │   ├── agents/        # Multi-agent system
-│   │   ├── memory/        # Long-term memory
-│   │   ├── knowledge/     # RAG system
-│   │   ├── tools/         # Tool integration
-│   │   ├── automation/    # Task automation
-│   │   ├── database.py    # ORM models
-│   │   ├── auth.py        # Authentication
-│   │   └── logging_config.py
-│   ├── main.py            # FastAPI app
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── pages/         # React pages
-│   │   ├── components/    # Reusable components
-│   │   ├── context/       # State management
-│   │   ├── config.js
-│   │   └── App.js
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml
-├── .env.example
-└── README.md
-```
-
-## 📋 Requirements
-
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose (recommended)
-- PostgreSQL 15+ (optional)
-- Redis (optional, for caching)
-
-## 🚀 Quick Start
-
-### Option 1: Docker Compose (Recommended)
-
-```bash
-# Clone & setup
-git clone <repo-url>
-cd OmniAgent
-cp .env.example .env
-
-# Add API keys
-nano .env
-# OPENAI_API_KEY=your_openai_api_key
-
-# Start everything
-docker-compose up -d
-
-# Access
-# Frontend: http://localhost:3000
-# Backend: http://localhost:8000
-# Docs: http://localhost:8000/api/docs
-```
-
-### Option 2: Local Development
-
-#### Backend
-
-```bash
-cd Backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -c "from app.database import init_db; init_db()"
-uvicorn main:app --reload --port 8000
-```
-
-#### Frontend
-
-```bash
-cd frontend
-npm install
-npm start  # http://localhost:3000
-```
-
-## 🔑 Key Endpoints
-
-### Authentication
-```
-POST   /api/auth/register      # User registration
-POST   /api/auth/login         # User login
-POST   /api/auth/refresh       # Refresh token
-```
-
-### Chat
-```
-POST   /api/chat               # Send message
-POST   /api/chat/stream        # Stream response
-GET    /api/conversations      # Get history
-GET    /api/conversations/{id}/messages
-```
-
-### Knowledge Base
-```
-POST   /api/documents/upload   # Upload PDF
-GET    /api/documents          # List documents
-POST   /api/search             # Search documents
-```
-
-### Tasks
-```
-POST   /api/tasks              # Create task
-GET    /api/tasks              # List tasks
-PUT    /api/tasks/{id}         # Update task
-DELETE /api/tasks/{id}         # Delete task
-```
-
-### Code Analysis
-```
-POST   /api/code/analyze       # Analyze code
-```
-
-### System
-```
-GET    /api/health             # Health check
-GET    /api/stats              # User statistics
-```
-
-## 📚 Environment Variables
-
-```env
-# Database
-DATABASE_URL=sqlite:///./omniai.db
-# PostgreSQL: postgresql+psycopg2://user:pass@host/db
-
-# API Keys
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_API_KEY=...
-OPENWEATHER_API_KEY=...
-
-# Security
-SECRET_KEY=your-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Server
-PORT=8000
-WORKERS=4
-LOG_LEVEL=INFO
-ENVIRONMENT=development
-
-# CORS
-CORS_ORIGINS=http://localhost:3000
-
-# Features
-ENABLE_RAG=true
-ENABLE_STREAMING=true
-ENABLE_MEMORY=true
-```
-
-## 📖 Usage Examples
-
-### 1. Register & Login
-
-```bash
-# Register
-curl -X POST http://localhost:8000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "user123",
-    "email": "user@example.com",
-    "password": "secure_password",
-    "full_name": "John Doe"
-  }'
-
-# Login
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "user123",
-    "password": "secure_password"
-  }'
-```
-
-### 2. Chat with AI
-
-```bash
-curl -X POST http://localhost:8000/api/chat \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "conv_123",
-    "message": "Explain machine learning",
-    "use_memory": true,
-    "use_rag": true
-  }'
-```
-
-### 3. Upload Document
-
-```bash
-curl -X POST http://localhost:8000/api/documents/upload \
-  -H "Authorization: Bearer {token}" \
-  -F "file=@document.pdf"
-```
-
-### 4. Create Task
-
-```bash
-curl -X POST http://localhost:8000/api/tasks \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Learn FastAPI",
-    "description": "Complete FastAPI tutorial",
-    "priority": 4,
-    "due_date": "2025-12-31T23:59:59"
-  }'
-```
-
-## 🧪 Testing
-
-```bash
-# Backend tests
-cd Backend
-pytest tests/ -v
-
-# Frontend tests
-cd frontend
-npm test
-```
-
-## 📦 Deployment
-
-### Heroku
-```bash
-heroku create omniai-app
-heroku addons:create heroku-postgresql:standard-0
-heroku config:set OPENAI_API_KEY=your_openai_api_key
-git push heroku main
-```
-
-### Railway
-```bash
-railway init
-railway add postgres
-railway up
-```
-
-### AWS/Digital Ocean
-```bash
-docker build -t omniai .
-docker tag omniai:latest your-registry/omniai
-docker push your-registry/omniai
-```
-
-## 📊 Monitoring
-
-```bash
-# View logs
-docker logs omniai_backend -f
-docker logs omniai_frontend -f
-
-# API metrics
-curl http://localhost:8000/api/stats
-
-# Database status
-psql -U omniai -d omniai -c "SELECT * FROM users;"
-```
-
-## 🐛 Troubleshooting
-
-### Port Already in Use
-```bash
-# Find process
-lsof -i :8000
-
-# Kill process
-kill -9 <PID>
-```
-
-### Database Connection Error
-```bash
-# Reset database
-rm omniai.db
-python -c "from app.database import init_db; init_db()"
-```
-
-### Frontend Not Loading
-```bash
-# Clear cache
-rm -rf node_modules package-lock.json
-npm install
-npm start
-```
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push branch (`git push origin feature/amazing`)
-5. Open Pull Request
-
-## 📚 Documentation
-
-- [API Documentation](./docs/API.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-- [Architecture Overview](./ARCHITECTURE.md)
-- [Setup Guide](./SETUP.md)
-
-## 📝 License
-
-MIT License - See [LICENSE](./LICENSE) file
-
-## 🙏 Acknowledgments
-
-- [LangChain](https://langchain.com/)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [React](https://react.dev/)
-- [ChromaDB](https://trychroma.com/)
-- [OpenAI](https://openai.com/)
-
-## 📞 Support
-
-- 📧 Email: support@omniai.dev
-- 🐛 [GitHub Issues](https://github.com/omniai/issues)
-- 💬 [Discussions](https://github.com/omniai/discussions)
-
-## 🚀 Roadmap
-
-- [ ] Mobile App (React Native)
-- [ ] Voice Chat
-- [ ] Advanced Analytics
-- [ ] Custom LLM Support
-- [ ] Multi-language UI
-- [ ] Offline Mode
-- [ ] Team Collaboration
-- [ ] Advanced RAG Features
+# 🤖 OmniAgent AI - Production-Ready AI Agent Platform
+
+**OmniAgent AI** is a state-of-the-art, full-stack enterprise-grade AI system featuring a Multi-Agent Intelligence workflow, Advanced Retrieval-Augmented Generation (RAG) pipelines, secure multi-user authentication, long-term memory, and real-time task automation dashboards.
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green.svg)](https://fastapi.tiangolo.com)
+[![React 18+](https://img.shields.io/badge/React-18%2B-blue.svg)](https://react.dev)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-336791.svg)](https://postgresql.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-**Made with ❤️ by OmniAgent Team**
+## ✨ System Features
 
-*Last Updated: May 2025*
+### 🔐 Security & Identity Management
+* **JWT Session Tokens**: Secure signup, login, and token-based API request authorization.
+* **CORS & CSP headers Sync**: Content-Security-Policy (CSP) `connect-src` header values are parsed dynamically from the allowed CORS origins at runtime (no hardcoded origins).
+* **Admin Guard Protection**: `/admin` and `/debug` pages are guarded by client-side router checks and backend role-authorization checks (`require_admin` dependency).
+* **Rate Limiting**: Integrated client-IP and user-scoped rate limiting (via Redis) to prevent brute-force attacks and throttling.
+
+### 🤖 Multi-Agent Intelligence Orchestration
+* **Planner**: Breaks down complex tasks into methodical step-by-step executions.
+* **Executor**: Processes each step and runs integrated tools (Calculator, Web Search, Python execution sandbox).
+* **Verifier**: Evaluates quality output scoring (0.0-1.0 scoring threshold) for final response correction.
+* **Intelligent Retry**: Self-corrects failing actions recursively under a LangGraph-style workflow.
+
+### 📚 Advanced RAG (Retrieval-Augmented Generation)
+* **Document Processing**: Uploads PDF, TXT, and Markdown files and performs high-speed chunk indexing with overlap.
+* **Semantic Embeddings**: Uses the `nomic-embed-text` model locally (via Ollama) to generate vector embeddings.
+* **Vector Search**: Performs fast semantic matches utilizing ChromaDB storage.
+* **Interactive Q&A**: Asks context-aware questions directly scoping a single file or the entire database with source citations.
+
+### 🧠 Sharing & Collaboration
+* **Public Conversation Sharing**: Generates shareable, dynamic links utilizing settings-configured `FRONTEND_URL`.
+* **Anonymous Shared View**: Non-logged users can view a public read-only conversation session directly at `/share/:shareToken` without triggering authentication redirects.
+
+### 📈 Task Automation & Control Center
+* **Live Kernel Diagnostics**: Monitor background job processes, memory consumption (short/long-term), CPU/Memory, and cache hits.
+* **Task Automation**: CRUD interfaces for prioritizing tasks, recurring job schedules, and status tracking.
+
+---
+
+## 🏗️ System Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│             OmniAgent AI Platform Architecture           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  Frontend Client Layer (React 18 + TS + Vite)            │
+│  ├─ Pages: Chat, Documents, Settings, Profiles, Admin    │
+│  ├─ Public Pages: Anonymous Shared View (/share/:token)  │
+│  └─ Router Guards: AdminProtected, AuthProtected         │
+│                                 ↓                        │
+│  API Gateway (FastAPI Async Layer)                       │
+│  ├─ Dynamic CORS & CSP Headers Engine                    │
+│  ├─ Rate Limiter Throttling (Redis backend)             │
+│  └─ API Token Verification (JWT Authentication)          │
+│                                 ↓                        │
+│  Core Orchestration Engine                               │
+│  ├─ Multi-Agent Workflows (Planner, Executor, Verifier)  │
+│  ├─ RAG Pipeline (Document Ingest, Chunker, Embeddings)  │
+│  └─ Background Worker Jobs (Syncing & Reindexing)         │
+│                                 ↓                        │
+│  Data & Engine Storage Layer                             │
+│  ├─ PostgreSQL (Primary relational SQLModel DB)          │
+│  ├─ Redis (Caching, job telemetry & session rate limits) │
+│  ├─ ChromaDB (Vector store database)                     │
+│  └─ Ollama (Local LLM & nomic-embed-text embeddings)     │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📂 Project Structure
+
+```
+omniagent-ai-ar/
+│
+├── omniagent-ai/
+│   ├── backend/
+│   │   ├── app/
+│   │   │   ├── api/            # API routers & endpoints (v1)
+│   │   │   ├── agents/         # Multi-agent system logic
+│   │   │   ├── core/           # Security headers, exceptions, middlewares
+│   │   │   ├── db/             # Database session, initialization, and seeding
+│   │   │   ├── models/         # SQLModel database tables
+│   │   │   ├── rag/            # RAG pipelines and embedding generators
+│   │   │   ├── services/       # Core business logic
+│   │   │   └── utils/          # Performance monitor, rate limiter, db builders
+│   │   ├── tests/              # Backend pytest test suite
+│   │   ├── pyproject.toml      # Dependency & package config
+│   │   └── init_and_run.py     # Database seed and runtime runner
+│   │
+│   ├── frontend/
+│   │   ├── src/
+│   │   │   ├── api/            # Axios API client services
+│   │   │   ├── components/     # Chat panels, message bubbles, sidebar components
+│   │   │   ├── pages/          # React route views (Dashboard, Chat, Share, Admin)
+│   │   │   ├── store/          # Zustand states (notifications, global stores)
+│   │   │   └── hooks/          # Custom auth, polling, and workspace hooks
+│   │   ├── package.json        # Node dependencies & build scripts
+│   │   └── vite.config.ts      # Vite configuration
+│   │
+│   └── docker/                 # Deployment container stack configuration
+│       └── docker-compose.yml  # Docker multi-container deployment
+│
+└── docs/                       # Internal API and architecture guides
+```
+
+---
+
+## 🚀 Setup & Installation
+
+### Prerequisite Dependencies
+Make sure you have the following installed on your machine:
+* **Python 3.11+**
+* **Node.js 18+**
+* **PostgreSQL 14+** (Install and verify it is running locally)
+* **Redis** (Used for rate-limiting, caching, and celery worker telemetry)
+* **Ollama** (Running with the `nomic-embed-text` and `llama3.2`/`phi3:mini` models)
+
+---
+
+### Step 1: Set Up Backend
+
+1. Navigate to the backend directory:
+   ```bash
+   cd omniagent-ai/backend
+   ```
+
+2. Create a virtual environment and activate it:
+   ```bash
+   # Windows
+   python -m venv .venv
+   .venv\Scripts\activate
+
+   # Mac/Linux
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. Install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure your `.env` settings:
+   Create a `.env` file under `omniagent-ai/backend/.env` with your credentials:
+   ```env
+   SECRET_KEY=change-me-to-a-very-long-safe-secret-key-32-chars
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/omniagent
+   REDIS_URL=redis://localhost:6379/0
+   OLLAMA_BASE_URL=http://localhost:11434
+   CORS_ORIGINS=http://localhost:5173
+   FRONTEND_URL=http://localhost:5173
+   ```
+
+5. Initialize the database and run the server:
+   ```bash
+   python init_and_run.py
+   ```
+   This will bootstrap database migrations, seed initial records, and start the FastAPI webserver at `http://localhost:8000`.
+
+---
+
+### Step 2: Set Up Frontend
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd omniagent-ai/frontend
+   ```
+
+2. Install npm dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Launch the hot-reloading development server:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser to interact with the application.
+
+---
+
+### Step 3: Run the Docker Stack (Alternative)
+To spin up the entire system (Backend, Frontend, Postgres, Redis, Chroma) containerized:
+```bash
+cd omniagent-ai/docker
+docker-compose up -d
+```
+
+---
+
+## 🧪 Testing & Verification
+
+### Run Backend Test Suite
+The backend contains a suite of 428 unit and integration tests. Run tests from the `backend/` directory:
+```bash
+python -m pytest tests/ -vv
+```
+
+### Build Frontend for Production
+Verify that the frontend compiles cleanly and passes all static type checks:
+```bash
+cd omniagent-ai/frontend
+npm run build
+```
+The optimized bundle files will be generated in `frontend/dist/` and are ready to serve via a production server or CDN.
+
+---
+
+## 🔑 Primary API Endpoints
+
+### 🔐 Authentication
+* `POST /api/v1/auth/signup` — Create user profile
+* `POST /api/v1/auth/login` — Sign in and retrieve JWT access token
+* `POST /api/v1/auth/change-password` — Update password
+
+### 💬 Conversations & Sharing
+* `POST /api/v1/conversations/` — Start a chat thread
+* `GET /api/v1/conversations/` — Get user conversation history
+* `POST /api/v1/tools/share-conversation` — Generate public share token for a chat thread
+* `GET /api/v1/tools/shared-conversation/{share_token}` — Retrieve shared conversation payload (Public)
+
+### 📚 Documents & RAG
+* `POST /api/v1/documents/upload` — Upload PDF/TXT/MD files to vector store
+* `GET /api/v1/documents/` — Retrieve inventory of uploaded documents
+* `POST /api/v1/documents/qa` — Generate synthesized answers with source citations
+* `GET /api/v1/documents/rag-search` — Query vector matches directly
+
+### ⚙️ System Admin & Debugging
+* `GET /api/v1/admin/dashboard` — View system overview analytics (Admin only)
+* `GET /api/v1/debug/status` — Live diagnostics on performance, cache, jobs, and memory stats (Admin only)
+
+---
+
+**Made with ❤️ by the OmniAgent AI Team**

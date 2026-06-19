@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useNotificationStore } from "../store/notificationStore";
@@ -8,6 +8,10 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 
 export default function Signup() {
+  useEffect(() => {
+    document.title = "Signup | OmniAgent AI";
+  }, []);
+
   const navigate = useNavigate();
   const { signup } = useAuth();
   const [email, setEmail] = useState("");
@@ -153,7 +157,7 @@ export default function Signup() {
               className="glass-panel p-4"
             >
               <p className="text-sm text-zinc-300 italic mb-2">
-                "OmniAgent transformed how we automate our workflows. Highly recommended!"
+                &quot;OmniAgent transformed how we automate our workflows. Highly recommended!&quot;
               </p>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
@@ -323,6 +327,7 @@ export default function Signup() {
                 transition={{ delay: 0.8 }}
                 className="mt-8 pt-6 border-t border-slate-700/50 text-center text-xs text-zinc-500"
               >
+                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 We'll never share your data. Read our privacy policy.
               </motion.div>
             </motion.div>

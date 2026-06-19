@@ -5,7 +5,7 @@ Code Interpreter, Calculator, File Analyzer, Visualization, Export/Share
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
-from sqlmodel import Session
+from sqlmodel import Session, select
 from typing import List, Dict, Any, Optional
 import json
 import structlog
@@ -79,13 +79,13 @@ async def execute_code(
     """Execute Python code in sandboxed environment"""
     log.info("execute_code.start", user_id=user.id, code_len=len(req.code))
 
-    result = code_interpreter.execute(req.code, req.variables)
+    result = code_interpreter.execute(req.code, req.variables or {})
 
     return ToolResponse(
         success=result['success'],
         result=result.get('result') or result.get('output'),
         error=result.get('error'),
-        metadata={'code': result.get('code')[:100]}
+        metadata={'code': (result.get('code') or '')[:100]}
     )
 
 
@@ -119,11 +119,10 @@ async def analyze_file(
     """Analyze uploaded file"""
     try:
         content = await file.read()
-        text_content = content.decode('utf-8', errors='ignore')
 
         log.info("analyze_file.start", user_id=user.id, filename=file.filename)
 
-        analysis = file_analyzer.analyze(file.filename or "file", text_content)
+        analysis = file_analyzer.analyze(file.filename or "file", content)
 
         return ToolResponse(
             success=True,
@@ -144,7 +143,7 @@ async def analyze_file_text(
     """Analyze file content (text-based)"""
     log.info("analyze_file_text.start", user_id=user.id, filename=req.filename)
 
-    analysis = file_analyzer.analyze(req.filename, req.content)
+    analysis = file_analyzer.analyze(req.filename, req.content.encode('utf-8'), text_content=req.content)
 
     return ToolResponse(
         success=True,
@@ -175,7 +174,7 @@ async def generate_chart(
 
 @router.post("/generate-chart-from-csv", response_model=ToolResponse)
 async def generate_chart_from_csv(
-    rows: List[List] = None,
+    rows: Optional[List[List]] = None,
     user: User = Depends(current_user),
 ):
     """Generate chart from CSV rows"""
@@ -209,7 +208,8 @@ async def export_conversation(
     """Export conversation in various formats"""
     try:
         from app.repositories.conversation_repo import ConversationRepo
-        from app.models.conversation import Conversation, Message
+        from app.models.conversation import Conversation
+        from app.models.message import Message
 
         repo = ConversationRepo(db)
         conv = repo.get(conv_id)
@@ -219,9 +219,9 @@ async def export_conversation(
 
         # Get all messages
         messages = db.exec(
-            db.select(Message)
+            select(Message)
             .where(Message.conversation_id == conv_id)
-            .order_by(Message.created_at)
+            .order_by(Message.created_at)  # type: ignore
         ).all()
 
         if format == "markdown":
@@ -298,6 +298,7 @@ async def share_conversation(
     try:
         from app.repositories.conversation_repo import ConversationRepo
         from app.models.conversation import Conversation
+        from app.models.sharing_and_faq import ConversationShare
 
         repo = ConversationRepo(db)
         conv = repo.get(conv_id)
@@ -305,19 +306,31 @@ async def share_conversation(
         if not conv or conv.user_id != user.id:
             raise HTTPException(status_code=404, detail="Conversation not found")
 
-        # Generate share token
-        import secrets
-        share_token = secrets.token_urlsafe(32)
-
-        # Update conversation (assuming model has these fields)
+        # Update conversation
         conv.is_shared = True
-        conv.share_token = share_token
-        conv.share_public = req.public
-
         db.add(conv)
+
+        # Find existing share or create new
+        share = db.exec(
+            select(ConversationShare).where(ConversationShare.conversation_id == conv_id)
+        ).first()
+
+        if not share:
+            import secrets
+            share_token = secrets.token_urlsafe(32)
+            share = ConversationShare(
+                conversation_id=conv_id,
+                shared_by_user_id=user.id,
+                share_token=share_token,
+            )
+            db.add(share)
+        else:
+            share_token = share.share_token
+
         db.commit()
 
-        share_url = f"https://yourdomain.com/share/{share_token}"
+        from app.config import get_settings
+        share_url = f"{get_settings().FRONTEND_URL}/share/{share_token}"
 
         log.info("conversation.shared", user_id=user.id, conv_id=conv_id)
 
@@ -342,23 +355,29 @@ async def get_shared_conversation(
     try:
         from sqlmodel import select
         from app.models.conversation import Conversation
+        from app.models.message import Message
+        from app.models.sharing_and_faq import ConversationShare
 
-        # Find conversation with this share token
-        conv = db.exec(
-            select(Conversation).where(
-                Conversation.share_token == share_token,
-                Conversation.is_shared == True
+        # Find the share record
+        share = db.exec(
+            select(ConversationShare).where(
+                ConversationShare.share_token == share_token
             )
         ).first()
 
-        if not conv:
+        if not share:
+            raise HTTPException(status_code=404, detail="Shared conversation not found")
+
+        # Get conversation
+        conv = db.get(Conversation, share.conversation_id)
+        if not conv or not conv.is_shared:
             raise HTTPException(status_code=404, detail="Shared conversation not found")
 
         # Get messages
         messages = db.exec(
-            db.select(Message)
+            select(Message)
             .where(Message.conversation_id == conv.id)
-            .order_by(Message.created_at)
+            .order_by(Message.created_at)  # type: ignore
         ).all()
 
         return {

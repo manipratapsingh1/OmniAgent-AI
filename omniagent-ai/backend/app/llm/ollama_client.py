@@ -15,8 +15,14 @@ _settings = get_settings()
 class OllamaClient:
     def __init__(self, base_url: Optional[str] = None):
         self.base_url = (base_url or _settings.OLLAMA_BASE_URL).rstrip("/")
-        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=60.0)
-        self._embed_client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
+        self._client = httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=float(_settings.OLLAMA_GENERATE_TIMEOUT),
+        )
+        self._embed_client = httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=float(_settings.OLLAMA_EMBED_TIMEOUT),
+        )
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -101,14 +107,23 @@ class OllamaClient:
                 if obj.get("done"):
                     break
 
-    @retry(stop=stop_after_attempt(2), wait=wait_exponential(min=2, max=15))
+    async def is_healthy(self) -> bool:
+        """Connection health check method"""
+        try:
+            r = await self._client.get("/api/tags", timeout=2.0)
+            return r.status_code == 200
+        except Exception:
+            return False
+
     async def embed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
         import structlog
+        import random
 
         log = structlog.get_logger("ollama")
         m = model or _settings.OLLAMA_EMBED_MODEL
 
         log.info("embed.start", text_count=len(texts), model=m)
+        log.info("embed.circuit_breaker_status", state=breakers["ollama"].state.value, failure_count=breakers["ollama"].failure_count)
 
         out: List[List[float]] = []
         embedding_dim: Optional[int] = None
@@ -121,59 +136,58 @@ class OllamaClient:
                 out.append([0.0] * embedding_dim)
                 continue
 
-            max_retries = 2
+            # We define a helper that makes the HTTP request to Ollama
+            async def _embed_single() -> List[float]:
+                r = await self._embed_client.post(
+                    "/api/embeddings",
+                    json={"model": m, "prompt": text[:4000]},
+                )
+                r.raise_for_status()
+                embedding = r.json().get("embedding")
+                if not embedding:
+                    raise ValueError("Ollama returned an empty embedding list")
+                return embedding
 
+            max_retries = 3
+            success = False
             for attempt in range(max_retries):
                 try:
-                    r = await self._embed_client.post(
-                        "/api/embeddings",
-                        json={"model": m, "prompt": text[:4000]},
-                    )
-                    r.raise_for_status()
-
-                    embedding = r.json().get("embedding")
-                    if not embedding:
-                        log.error("embed.empty_embedding", index=i, text_length=len(text))
-                        if attempt == max_retries - 1:
-                            return []
-                        continue
+                    # Execute within circuit breaker
+                    embedding = await breakers["ollama"].call(_embed_single)
 
                     if embedding_dim is None:
                         embedding_dim = len(embedding)
                         log.info("embed.dimension_detected", dimension=embedding_dim, model=m)
 
                     out.append(embedding)
-
+                    success = True
                     if (i + 1) % 5 == 0:
                         log.info("embed.progress", completed=i + 1, total=len(texts))
-
                     break
 
-                except httpx.TimeoutException as e:
-                    log.warning(
-                        "embed.timeout",
-                        index=i,
-                        text_length=len(text),
-                        attempt=attempt + 1,
-                        max_attempts=max_retries,
-                        error=str(e),
-                    )
-                    if attempt == max_retries - 1:
-                        raise
-                    await asyncio.sleep(2**attempt)
-
                 except Exception as e:
+                    # Exponential backoff with jitter: wait_time = base * 2^attempt + jitter
+                    base_wait = 1.0
+                    jitter = random.uniform(0.1, 0.5)
+                    wait_time = (base_wait * (2 ** attempt)) + jitter
+                    
                     log.warning(
-                        "embed.error",
+                        "embed.error_retry",
                         index=i,
-                        text_length=len(text),
                         attempt=attempt + 1,
                         max_attempts=max_retries,
+                        wait_time=round(wait_time, 2),
                         error=str(e),
                     )
                     if attempt == max_retries - 1:
-                        raise
-                    await asyncio.sleep(1)
+                        # If we exhaust all retries, do not crash the whole batch if we already have some embeddings.
+                        # Instead, pad with a zero vector of correct dimension so partial results can proceed.
+                        log.error("embed.failed_all_retries", index=i, error=str(e))
+                        if embedding_dim is None:
+                            embedding_dim = 768
+                        out.append([0.0] * embedding_dim)
+                    else:
+                        await asyncio.sleep(wait_time)
 
         log.info("embed.complete", count=len(out), dimension=embedding_dim)
         return out

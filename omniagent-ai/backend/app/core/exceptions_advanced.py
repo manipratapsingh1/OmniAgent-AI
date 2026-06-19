@@ -1,6 +1,6 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from datetime import datetime
+from datetime import datetime, timezone
 import structlog
 
 log = structlog.get_logger("validation")
@@ -44,7 +44,7 @@ def register_exception_handlers(app):
                 "error": "validation_error",
                 "message": exc.detail,
                 "field": exc.field,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
     
@@ -57,7 +57,7 @@ def register_exception_handlers(app):
                 "error": "rate_limit_exceeded",
                 "message": exc.detail,
                 "retry_after": exc.retry_after,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             headers={"Retry-After": str(exc.retry_after)}
         )
@@ -70,6 +70,6 @@ def register_exception_handlers(app):
             content={
                 "error": "insufficient_quota",
                 "message": exc.detail,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )

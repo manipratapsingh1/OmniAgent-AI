@@ -69,6 +69,9 @@ Write-Host "Server starting on http://0.0.0.0:8000"
 Write-Host "API docs:     http://0.0.0.0:8000/docs"
 Write-Host "ReDoc:        http://0.0.0.0:8000/redoc"
 Write-Host ""
+Write-Host "IMPORTANT: A background worker is required to process document uploads." -ForegroundColor Yellow
+Write-Host "Please start the worker in a separate terminal: python start_rq_worker.py" -ForegroundColor Yellow
+Write-Host ""
 Write-Host "Press Ctrl+C to stop"
 Write-Host ""
 

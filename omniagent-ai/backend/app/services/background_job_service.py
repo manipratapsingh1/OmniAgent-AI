@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from app.models.background_job import BackgroundJob
-from datetime import datetime
+from datetime import datetime, timezone
 import structlog
 import uuid
 
@@ -53,9 +53,9 @@ class BackgroundJobService:
             job.error = error
         
         if status == "processing" and not job.started_at:
-            job.started_at = datetime.utcnow()
+            job.started_at = datetime.now(timezone.utc)
         elif status in ["completed", "failed"]:
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
         
         self.db.add(job)
         self.db.commit()
@@ -100,7 +100,7 @@ class BackgroundJobService:
             return False
         
         job.status = "cancelled"
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(timezone.utc)
         self.db.add(job)
         self.db.commit()
         

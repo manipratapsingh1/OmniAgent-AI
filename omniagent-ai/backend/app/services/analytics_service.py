@@ -2,7 +2,7 @@ from sqlmodel import Session, select, func
 from app.models.message import Message
 from app.models.agent_run import AgentRun
 from app.models.user import User
-from app.models.document import Document
+from app.models.document import Document, DocumentChunk
 from app.models.document_tags import DocumentTag
 from datetime import datetime, timedelta, timezone
 import structlog
@@ -15,83 +15,89 @@ class AnalyticsService:
         self.db = db
 
     def overview(self) -> dict:
-        users = self.db.exec(select(func.count(User.id))).one()
-        msgs = self.db.exec(select(func.count(Message.id))).one()
-        runs = self.db.exec(select(func.count(AgentRun.id))).one()
+        users = self.db.exec(select(func.count(User.id))).one()  # type: ignore
+        msgs = self.db.exec(select(func.count(Message.id))).one()  # type: ignore
+        runs = self.db.exec(select(func.count(AgentRun.id))).one()  # type: ignore
         avg_lat = self.db.exec(select(func.avg(AgentRun.latency_ms))).one() or 0
         
         return {
-            "users": int(users or 0),
-            "messages": int(msgs or 0),
-            "agent_runs": int(runs or 0),
+            "users": users or 0,
+            "messages": msgs or 0,
+            "agent_runs": runs or 0,
             "avg_agent_latency_ms": float(avg_lat or 0),
         }
 
     def get_user_analytics(self) -> dict:
         """Get user statistics"""
-        total_users = self.db.exec(select(func.count(User.id))).one() or 0
-        active_users = self.db.exec(select(func.count(User.id)).where(User.is_active == True)).one() or 0
-        admin_users = self.db.exec(select(func.count(User.id)).where(User.is_admin == True)).one() or 0
+        total_users = self.db.exec(select(func.count(User.id))).one() or 0  # type: ignore
+        active_users = self.db.exec(select(func.count(User.id)).where(User.is_active == True)).one() or 0  # type: ignore
+        admin_users = self.db.exec(select(func.count(User.id)).where(User.is_admin == True)).one() or 0  # type: ignore
         
         return {
-            "total_users": int(total_users),
-            "active_users": int(active_users),
-            "admin_users": int(admin_users)
+            "total_users": total_users,
+            "active_users": active_users,
+            "admin_users": admin_users
         }
 
     def get_document_analytics(self) -> dict:
         """Get document statistics"""
-        total_docs = self.db.exec(select(func.count(Document.id))).one() or 0
+        total_docs = self.db.exec(select(func.count(Document.id))).one() or 0  # type: ignore
         indexed_docs = self.db.exec(
-            select(func.count(Document.id)).where(Document.status == "indexed")
+            select(func.count(Document.id)).where(Document.status == "indexed")  # type: ignore
         ).one() or 0
         failed_docs = self.db.exec(
-            select(func.count(Document.id)).where(Document.status == "failed")
+            select(func.count(Document.id)).where(Document.status == "failed")  # type: ignore
         ).one() or 0
         pending_docs = self.db.exec(
-            select(func.count(Document.id)).where(Document.status == "pending")
+            select(func.count(Document.id)).where(Document.status == "pending")  # type: ignore
         ).one() or 0
         
         total_size = self.db.exec(
             select(func.sum(Document.size_bytes))
         ).one() or 0
+
+        total_chunks = self.db.exec(
+            select(func.count(DocumentChunk.id))  # type: ignore
+        ).one() or 0
         
         return {
-            "total_documents": int(total_docs),
-            "indexed": int(indexed_docs),
-            "failed": int(failed_docs),
-            "pending": int(pending_docs),
-            "total_size_bytes": int(total_size),
+            "total": total_docs,
+            "total_documents": total_docs,
+            "indexed": indexed_docs,
+            "failed": failed_docs,
+            "pending": pending_docs,
+            "total_size_bytes": total_size,
+            "total_chunks": total_chunks,
         }
 
     def get_message_analytics(self) -> dict:
         """Get message statistics"""
-        total_messages = self.db.exec(select(func.count(Message.id))).one() or 0
-        user_messages = self.db.exec(select(func.count(Message.id)).where(Message.role == "user")).one() or 0
-        assistant_messages = self.db.exec(select(func.count(Message.id)).where(Message.role == "assistant")).one() or 0
+        total_messages = self.db.exec(select(func.count(Message.id))).one() or 0  # type: ignore
+        user_messages = self.db.exec(select(func.count(Message.id)).where(Message.role == "user")).one() or 0  # type: ignore
+        assistant_messages = self.db.exec(select(func.count(Message.id)).where(Message.role == "assistant")).one() or 0  # type: ignore
         
         yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         messages_last_24h = self.db.exec(
-            select(func.count(Message.id)).where(Message.created_at >= yesterday)
+            select(func.count(Message.id)).where(Message.created_at >= yesterday)  # type: ignore
         ).one() or 0
         
         return {
-            "total_messages": int(total_messages),
-            "user_messages": int(user_messages),
-            "assistant_messages": int(assistant_messages),
-            "messages_last_24h": int(messages_last_24h)
+            "total_messages": total_messages,
+            "user_messages": user_messages,
+            "assistant_messages": assistant_messages,
+            "messages_last_24h": messages_last_24h
         }
 
     def get_agent_analytics(self) -> dict:
         """Get agent run statistics"""
-        total_runs = self.db.exec(select(func.count(AgentRun.id))).one() or 0
+        total_runs = self.db.exec(select(func.count(AgentRun.id))).one() or 0  # type: ignore
         avg_latency = self.db.exec(select(func.avg(AgentRun.latency_ms))).one() or 0
         
         # Popular agents
         agent_usage = self.db.exec(
-            select(AgentRun.agent, func.count(AgentRun.id).label("count"))
+            select(AgentRun.agent, func.count(AgentRun.id).label("count"))  # type: ignore
             .group_by(AgentRun.agent)
-            .order_by(func.count(AgentRun.id).desc())
+            .order_by(func.count(AgentRun.id).desc())  # type: ignore
             .limit(5)
         ).all()
         
@@ -100,11 +106,11 @@ class AnalyticsService:
         success_rate = 1.0 if total_runs > 0 else 0.0
         
         return {
-            "total_runs": int(total_runs),
+            "total_runs": total_runs,
             "avg_latency_ms": float(avg_latency or 0),
             "success_rate": success_rate,
             "popular_agents": [
-                {"agent": item[0], "count": int(item[1] or 0)} for item in agent_usage
+                {"agent": item[0], "count": item[1] or 0} for item in agent_usage
             ]
         }
 
@@ -113,27 +119,27 @@ class AnalyticsService:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         tag_counts = self.db.exec(
-            select(DocumentTag.tag, func.count(DocumentTag.id).label("count"))
+            select(DocumentTag.tag, func.count(DocumentTag.id).label("count"))  # type: ignore
             .where(DocumentTag.created_at >= cutoff)
             .group_by(DocumentTag.tag)
-            .order_by(func.count(DocumentTag.id).desc())
+            .order_by(func.count(DocumentTag.id).desc())  # type: ignore
             .limit(12)
         ).all()
 
         category_counts = self.db.exec(
-            select(DocumentTag.category, func.count(DocumentTag.id).label("count"))
+            select(DocumentTag.category, func.count(DocumentTag.id).label("count"))  # type: ignore
             .where(DocumentTag.created_at >= cutoff)
             .group_by(DocumentTag.category)
-            .order_by(func.count(DocumentTag.id).desc())
+            .order_by(func.count(DocumentTag.id).desc())  # type: ignore
             .limit(12)
         ).all()
 
         return {
             "top_tags": [
-                {"tag": item[0], "count": int(item[1] or 0)} for item in tag_counts
+                {"tag": item[0], "count": item[1] or 0} for item in tag_counts
             ],
             "top_categories": [
-                {"category": item[0] or "Uncategorized", "count": int(item[1] or 0)} for item in category_counts
+                {"category": item[0] or "Uncategorized", "count": item[1] or 0} for item in category_counts
             ],
         }
 

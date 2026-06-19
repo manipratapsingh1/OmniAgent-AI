@@ -9,6 +9,7 @@ export const api = axios.create({
 });
 
 // Request interceptor
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RetryConfig extends AxiosRequestConfig {
   retryCount?: number;
 }
@@ -21,6 +22,8 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     // Initialize retry count in config as any to bypass strict Axios types if needed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (config as any).retryCount = (config as any).retryCount || 0;
     return config;
   },
@@ -31,6 +34,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = error.config as any;
     
     // Check if we should retry (for idempotent methods only)

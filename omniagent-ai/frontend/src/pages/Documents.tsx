@@ -6,8 +6,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useNotificationStore } from "../store/notificationStore";
 import { usePolling } from "../hooks/usePolling";
 import { jobService } from "../api/jobService";
-import { FiLoader, FiTrash2, FiAlertTriangle, FiLock, FiFileText, FiDownload, FiCheck } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { FiLoader, FiTrash2, FiAlertTriangle, FiFileText, FiSearch, FiCpu, FiMessageSquare, FiX, FiActivity } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 import type { BackgroundJob, Citation, DocumentItem } from "../api/types";
 
 type DocumentChunkPreview = {
@@ -31,6 +31,10 @@ type SemanticResult = {
 };
 
 export default function Documents() {
+  useEffect(() => {
+    document.title = "Documents | OmniAgent AI";
+  }, []);
+
   const { user, loading: authLoading } = useAuth();
   const [docs, setDocs] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +57,9 @@ export default function Documents() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [jobFilter, setJobFilter] = useState<string>("all");
   const [cancellingJobId, setCancellingJobId] = useState<number | null>(null);
+  const [searchTab, setSearchTab] = useState<"filename" | "semantic">("filename");
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: jobs, loading: jobsLoading, error: jobsError, refetch: refetchJobs } = usePolling<BackgroundJob[]>(
     () => jobService.getJobs(0, 20),
     {
@@ -88,6 +94,7 @@ export default function Documents() {
     if (!authLoading) {
       load();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);
 
   const deleteDoc = async (id: number) => {
@@ -111,13 +118,6 @@ export default function Documents() {
     } finally {
       setDeleting(null);
     }
-  };
-
-  const statusStyles = {
-    indexed: "bg-green-900/30 text-green-300 border border-green-800",
-    failed: "bg-red-900/30 text-red-300 border border-red-800",
-    processing: "bg-blue-900/30 text-blue-300 border border-blue-800",
-    pending: "bg-slate-800/30 text-slate-300 border border-slate-700",
   };
 
   const handleAskQuestion = async () => {
@@ -249,58 +249,82 @@ export default function Documents() {
 
         {/* Background Job Status */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }} className="mb-8">
-          <div className="glass-panel p-6">
-              <div className="flex items-center justify-between mb-4">
+          <div className="glass-panel p-6 border border-zinc-800 bg-zinc-950/40 relative overflow-hidden group">
+            {/* Ambient light overlay */}
+            <div className="absolute -inset-px bg-gradient-to-r from-purple-500/10 via-transparent to-pink-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-10">
               <div>
-                <h2 className="text-xl font-semibold text-white">Ingestion Jobs</h2>
-                <p className="text-zinc-400 text-sm">Monitor document ingestion progress for queued uploads.</p>
+                <div className="flex items-center gap-2">
+                  <FiActivity className="text-purple-400 animate-pulse" />
+                  <h2 className="text-xl font-bold text-white tracking-wide">Ingestion Jobs</h2>
+                </div>
+                <p className="text-zinc-400 text-sm mt-1">Track real-time background processing for document embeddings.</p>
               </div>
               <div className="flex items-center gap-3">
-                <label htmlFor="job-filter-select" className="sr-only">
-                  Job filter
-                </label>
+                <label htmlFor="job-filter-select" className="sr-only">Job filter</label>
                 <select
                   id="job-filter-select"
                   value={jobFilter}
                   onChange={(e) => setJobFilter(e.target.value)}
-                  className="rounded-2xl border border-slate-700 bg-slate-950/80 p-2 text-sm text-white"
+                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-purple-500 focus:outline-none transition"
                 >
-                  <option value="all">All</option>
+                  <option value="all">All Jobs</option>
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
                   <option value="completed">Completed</option>
                   <option value="failed">Failed</option>
                 </select>
-                {jobsLoading && <span className="text-sm text-blue-300">Refreshing...</span>}
+                {jobsLoading && <FiLoader className="animate-spin text-purple-400 text-xs" />}
               </div>
             </div>
             {jobs && jobs.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 relative z-10">
                 {filteredJobs.map((job) => (
-                  <div key={job.id} className="rounded-xl border border-slate-700 bg-slate-950/80 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-zinc-400">Job #{job.id} · {job.job_type}</p>
-                      <p className="text-white">Status: <span className="font-semibold">{job.status}</span></p>
-                      {job.error && <p className="text-sm text-red-400">Error: {job.error}</p>}
+                  <div key={job.id} className="rounded-xl border border-zinc-900 bg-zinc-900/40 hover:bg-zinc-900/60 p-4 transition duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs text-zinc-500 font-mono">Job #{job.id}</span>
+                        <span className="text-xs text-zinc-400 font-medium bg-zinc-850 px-2 py-0.5 rounded font-mono capitalize">{job.job_type}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          job.status === 'completed' ? 'bg-green-400' :
+                          job.status === 'failed' ? 'bg-red-400 animate-pulse' :
+                          job.status === 'processing' ? 'bg-blue-400 animate-ping' :
+                          'bg-zinc-400'
+                        }`} />
+                        <span className="text-sm font-semibold text-zinc-200 capitalize">{job.status}</span>
+                      </div>
+                      {job.error && (
+                        <p className="text-xs text-red-400 bg-red-950/20 border border-red-900/20 px-3 py-1.5 rounded-lg mt-2 font-mono">
+                          {job.error}
+                        </p>
+                      )}
                     </div>
-                    <div className="inline-flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.12em] ${
-                        job.status === 'completed' ? 'bg-green-900/30 text-green-300' :
-                        job.status === 'failed' ? 'bg-red-900/30 text-red-300' :
-                        job.status === 'processing' ? 'bg-blue-900/30 text-blue-300' :
-                        'bg-slate-800/30 text-slate-300'
-                      }`}>
-                        {job.progress}%
-                      </span>
-                      <span className="text-xs text-zinc-500">Updated: {new Date(job.created_at).toLocaleString()}</span>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="w-24 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              job.status === 'completed' ? 'bg-green-500' :
+                              job.status === 'failed' ? 'bg-red-500' :
+                              'bg-gradient-to-r from-purple-500 to-pink-500'
+                            }`}
+                            style={{ width: `${job.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-zinc-400">{job.progress}%</span>
+                      </div>
+                      <span className="text-xs text-zinc-500 font-mono hidden sm:inline">{new Date(job.created_at).toLocaleTimeString()}</span>
                       { (job.status === 'pending' || job.status === 'processing') && (
                         <button
                           type="button"
                           onClick={() => cancelJob(job.id)}
                           disabled={cancellingJobId === job.id}
-                          className="ml-2 rounded-md bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-500 disabled:opacity-50"
+                          className="rounded-xl border border-red-950 bg-red-900/10 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-900/20 disabled:opacity-50 transition"
                         >
-                          {cancellingJobId === job.id ? 'Cancelling...' : 'Cancel'}
+                          {cancellingJobId === job.id ? 'Stopping...' : 'Cancel'}
                         </button>
                       )}
                     </div>
@@ -308,155 +332,199 @@ export default function Documents() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-slate-700 bg-slate-950/80 p-6 text-center text-zinc-400">
-                {jobsLoading ? "Loading jobs..." : "No ingestion jobs queued right now."}
+              <div className="rounded-xl border border-zinc-900 bg-zinc-900/20 p-8 text-center text-zinc-500 relative z-10">
+                {jobsLoading ? "Checking jobs..." : "No active ingestion jobs queued."}
               </div>
             )}
           </div>
         </motion.div>
 
-        {/* Document Search + Preview Section */}
+        {/* Unified Search Section */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.18 }} className="mb-8">
-          <div className="glass-panel p-6">
-            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Search documents</h2>
-                <p className="text-zinc-400 text-sm mb-4">Search by filename or explore content with semantic RAG search.</p>
-                <div className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div className="glass-panel p-6 border border-zinc-800 bg-zinc-950/40 relative">
+            <div className="flex items-center gap-1.5 border-b border-zinc-850 pb-4 mb-6">
+              <button
+                onClick={() => setSearchTab("filename")}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                  searchTab === "filename"
+                    ? "bg-zinc-850 text-white shadow-lg"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <FiSearch size={16} />
+                Filename Search
+              </button>
+              <button
+                onClick={() => setSearchTab("semantic")}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                  searchTab === "semantic"
+                    ? "bg-zinc-850 text-white shadow-lg border border-purple-900/30"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <FiCpu size={16} className={searchTab === "semantic" ? "text-purple-400" : ""} />
+                Semantic RAG Search
+              </button>
+            </div>
+
+            {searchTab === "filename" ? (
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <div className="relative">
+                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
                     <input
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search by filename..."
-                      className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 p-3 text-white outline-none focus:border-purple-500"
+                      onKeyDown={(event) => event.key === "Enter" && searchDocuments()}
+                      placeholder="Search files by name..."
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/40 text-white text-sm outline-none focus:border-purple-500 transition"
                     />
-                    <button
-                      onClick={searchDocuments}
-                      disabled={searchLoading}
-                      className="rounded-2xl bg-purple-600 px-4 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
-                    >
-                      {searchLoading ? "Searching..." : "Search"}
-                    </button>
                   </div>
-                  {searchResults.length > 0 && (
-                    <div className="rounded-2xl border border-slate-700 bg-slate-950/80 p-4">
-                      <p className="text-sm text-zinc-400 mb-3">Filename search results</p>
-                      <div className="space-y-2">
-                        {searchResults.map((result) => (
-                          <button
-                            key={result.id}
-                            onClick={() => previewDocument(result)}
-                            className="w-full text-left rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-white hover:bg-slate-900 transition"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <span>{result.filename}</span>
-                              <span className="text-xs text-zinc-400">{result.status}</span>
-                            </div>
-                            <p className="text-xs text-zinc-500 mt-1">{result.chunk_count ?? 0} chunks</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={searchDocuments}
+                    disabled={searchLoading}
+                    className="rounded-xl bg-purple-600 hover:bg-purple-500 px-6 py-3 font-semibold text-sm text-white transition disabled:opacity-50 shadow-lg shadow-purple-600/20"
+                  >
+                    {searchLoading ? "Searching..." : "Search Files"}
+                  </button>
                 </div>
+                {searchResults.length > 0 ? (
+                  <div className="rounded-xl border border-zinc-900 bg-zinc-900/20 p-4 space-y-2">
+                    <p className="text-xs text-zinc-500 font-mono tracking-wider uppercase mb-3">Matching documents</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {searchResults.map((result) => (
+                        <button
+                          key={result.id}
+                          onClick={() => previewDocument(result)}
+                          className="text-left rounded-xl border border-zinc-900 hover:border-zinc-855 bg-zinc-955/60 hover:bg-zinc-955 px-4 py-3 text-white transition flex flex-col justify-between group"
+                        >
+                          <span className="font-semibold text-sm group-hover:text-purple-300 transition truncate w-full">{result.filename}</span>
+                          <div className="flex items-center justify-between w-full mt-2 text-xs text-zinc-500">
+                            <span>{result.chunk_count ?? 0} chunks</span>
+                            <span className="capitalize bg-zinc-900 px-2 py-0.5 rounded font-mono text-[10px]">{result.status}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : searchQuery.trim() && !searchLoading && (
+                  <p className="text-sm text-zinc-500 text-center py-4">No matching filenames found.</p>
+                )}
               </div>
-
-              <div>
-                <h2 className="text-xl font-semibold text-white">Semantic content search</h2>
-                <p className="text-zinc-400 text-sm mb-4">Find relevant passages across your documents using embedded search.</p>
-                <div className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            ) : (
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <div className="relative">
+                    <FiCpu className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
                     <input
                       value={semanticQuery}
                       onChange={(event) => setSemanticQuery(event.target.value)}
-                      placeholder="Search inside documents..."
-                      className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 p-3 text-white outline-none focus:border-pink-500"
+                      onKeyDown={(event) => event.key === "Enter" && semanticSearch()}
+                      placeholder="Ask/search concepts inside document contents..."
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/40 text-white text-sm outline-none focus:border-pink-500 transition"
                     />
-                    <button
-                      onClick={semanticSearch}
-                      disabled={semanticLoading}
-                      className="rounded-2xl bg-pink-600 px-4 py-3 font-semibold text-white transition hover:bg-pink-500 disabled:opacity-50"
-                    >
-                      {semanticLoading ? "Searching..." : "Search"}
-                    </button>
                   </div>
-                  {semanticResults.length > 0 && (
-                    <div className="rounded-2xl border border-slate-700 bg-slate-950/80 p-4">
-                      <p className="text-sm text-zinc-400 mb-3">Semantic search results</p>
-                      <div className="space-y-3">
-                        {semanticResults.map((item, index) => (
-                          <div key={`${item.document_id}-${index}`} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-sm text-zinc-300">
-                              <span>{item.filename}</span>
-                              <span className="rounded-full bg-slate-800/80 px-2 py-1 text-xs text-zinc-400">Score {item.similarity_score.toFixed(3)}</span>
-                            </div>
-                            <p className="text-sm text-zinc-200 leading-6">{item.chunk_text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={semanticSearch}
+                    disabled={semanticLoading}
+                    className="rounded-xl bg-pink-600 hover:bg-pink-500 px-6 py-3 font-semibold text-sm text-white transition disabled:opacity-50 shadow-lg shadow-pink-600/20"
+                  >
+                    {semanticLoading ? "Analyzing..." : "RAG Search"}
+                  </button>
                 </div>
+                {semanticResults.length > 0 ? (
+                  <div className="rounded-xl border border-zinc-900 bg-zinc-900/20 p-4 space-y-3">
+                    <p className="text-xs text-zinc-500 font-mono tracking-wider uppercase mb-3">Relevant Passage Matches</p>
+                    <div className="space-y-3">
+                      {semanticResults.map((item, index) => (
+                        <div key={`${item.document_id}-${index}`} className="rounded-xl border border-zinc-900 bg-zinc-950/60 p-4 hover:border-zinc-850 transition">
+                          <div className="flex items-center justify-between gap-3 mb-2 pb-2 border-b border-zinc-900/60">
+                            <span className="text-xs font-semibold text-zinc-300 truncate font-sans">{item.filename}</span>
+                            <span className="rounded-full bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 font-mono">
+                              Match {item.similarity_score.toFixed(3)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-zinc-300 leading-6 font-sans italic">&quot;{item.chunk_text}&quot;</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : semanticQuery.trim() && !semanticLoading && (
+                  <p className="text-sm text-zinc-500 text-center py-4">No relevant passages found for this concept.</p>
+                )}
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
 
         {/* Document QA Section */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mb-8">
-          <div className="glass-panel p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-white">Ask a question</h2>
-              <p className="text-zinc-400 text-sm">Ask about your indexed documents. Optionally choose a single document for a narrow answer.</p>
+          <div className="glass-panel p-6 border border-zinc-800 bg-zinc-950/40 relative group">
+            {/* Glow effect */}
+            <div className="absolute -inset-px bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl opacity-100 group-hover:opacity-100 transition duration-700 pointer-events-none" />
+            
+            <div className="mb-6 relative z-10 flex items-center gap-2">
+              <FiMessageSquare className="text-pink-400" />
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-wide">Ask Document Assistant</h2>
+                <p className="text-zinc-400 text-sm mt-0.5">Generate direct conceptual answers extracted directly from your index.</p>
+              </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-[1fr_240px]">
-              <textarea
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="What do you want to know about your documents?"
-                className="min-h-[140px] w-full rounded-2xl border border-slate-700 bg-slate-950/70 p-4 text-white focus:border-purple-500 focus:outline-none"
-              />
+            
+            <div className="grid gap-4 md:grid-cols-[1fr_260px] relative z-10">
+              <div className="relative flex">
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  placeholder="What would you like to ask or analyze about the documents?"
+                  className="min-h-[140px] w-full rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-white text-sm focus:border-purple-500 focus:outline-none resize-none transition"
+                />
+              </div>
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-zinc-300">Document Filter</label>
-                <select
-                  aria-label="Document filter"
-                  value={selectedDocId ?? ""}
-                  onChange={(event) => setSelectedDocId(event.target.value ? Number(event.target.value) : undefined)}
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 p-3 text-white focus:border-purple-500 focus:outline-none"
-                >
-                  <option value="">All indexed documents</option>
-                  {docs.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.filename}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label htmlFor="qa-doc-filter" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Scope Filter</label>
+                  <select
+                    id="qa-doc-filter"
+                    value={selectedDocId ?? ""}
+                    onChange={(event) => setSelectedDocId(event.target.value ? Number(event.target.value) : undefined)}
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-white focus:border-purple-500 focus:outline-none transition"
+                  >
+                    <option value="">All indexed documents</option>
+                    {docs.map((doc) => (
+                      <option key={doc.id} value={doc.id}>
+                        {doc.filename}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   onClick={handleAskQuestion}
                   disabled={qaLoading}
-                  className="w-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-3 text-sm font-bold text-white transition disabled:opacity-50 shadow-lg shadow-purple-600/10 cursor-pointer"
                 >
-                  {qaLoading ? "Asking..." : "Get Answer"}
+                  {qaLoading ? "Synthesizing..." : "Ask Assistant"}
                 </button>
-                {qaError && <p className="text-sm text-red-400">{qaError}</p>}
+                {qaError && <p className="text-xs text-red-400 font-mono">{qaError}</p>}
               </div>
             </div>
 
             {qaAnswer && (
-              <div className="mt-6 rounded-2xl border border-slate-700 bg-slate-950/80 p-5">
-                <h3 className="text-lg font-semibold text-white mb-3">Answer</h3>
-                <p className="whitespace-pre-wrap text-zinc-100">{qaAnswer}</p>
+              <div className="mt-6 rounded-xl border border-zinc-850 bg-zinc-900/30 p-5 relative z-10">
+                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Synthesized Answer</h3>
+                <p className="whitespace-pre-wrap text-zinc-100 text-sm leading-7 font-sans">{qaAnswer}</p>
                 {qaSources.length > 0 && (
-                  <div className="mt-4 border-t border-slate-700 pt-4">
-                    <h4 className="text-sm font-medium text-zinc-300 mb-2">Sources</h4>
-                    <ul className="space-y-2 text-sm text-zinc-400">
+                  <div className="mt-5 border-t border-zinc-850 pt-4">
+                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">Document Citations</h4>
+                    <div className="grid gap-3 sm:grid-cols-2">
                       {qaSources.map((source, idx) => (
-                        <li key={idx} className="rounded-xl bg-slate-900/60 p-3">
-                          <p className="text-zinc-200">Document #{source.document_id} · Chunk {source.chunk_index}</p>
-                          <p>{source.snippet}</p>
-                        </li>
+                        <div key={idx} className="rounded-xl bg-zinc-950/80 border border-zinc-900/60 p-3.5 hover:border-zinc-800 transition">
+                          <p className="text-xs font-semibold text-purple-400 font-mono mb-1.5">
+                            Doc #{source.document_id} · Chunk {source.chunk_index}
+                          </p>
+                          <p className="text-xs text-zinc-400 leading-5 italic">&quot;{source.snippet}&quot;</p>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
@@ -467,22 +535,22 @@ export default function Documents() {
         {/* Documents List Section */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
           <div className="flex items-center gap-2 mb-6">
-            <div className="h-1 w-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
-            <h2 className="text-xl font-semibold text-white">Your Documents ({docs.length})</h2>
+            <div className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
+            <h2 className="text-xl font-semibold text-white tracking-wide">Your Documents ({docs.length})</h2>
           </div>
 
           {loading ? (
-            <div className="glass-panel p-12 flex items-center justify-center">
+            <div className="glass-panel p-12 flex items-center justify-center border border-zinc-900">
               <div className="flex flex-col items-center gap-3">
-                <FiLoader className="animate-spin text-blue-400" size={32} />
-                <span className="text-zinc-400">Loading documents...</span>
+                <FiLoader className="animate-spin text-purple-400" size={32} />
+                <span className="text-zinc-400 text-sm">Loading document inventory...</span>
               </div>
             </div>
           ) : docs.length === 0 ? (
-            <div className="glass-panel p-12 text-center">
+            <div className="glass-panel p-12 text-center border border-zinc-900">
               <FiFileText className="mx-auto mb-4 text-zinc-500" size={48} />
               <h3 className="text-lg font-semibold text-white mb-2">No documents yet</h3>
-              <p className="text-zinc-400">Upload your first document to get started</p>
+              <p className="text-zinc-400 text-sm">Upload your first document to get started</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -492,30 +560,30 @@ export default function Documents() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="card group hover:border-slate-600/70 hover:shadow-card-hover"
+                  className="rounded-xl border border-zinc-900 hover:border-zinc-800 bg-zinc-955/40 hover:bg-zinc-955/60 p-4 transition duration-300 group hover:shadow-lg hover:shadow-purple-95/5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Document Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-purple-600/30 to-purple-700/30 group-hover:from-purple-600/40 group-hover:to-purple-700/40 transition">
+                        <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 group-hover:border-zinc-700 transition">
                           <FiFileText className="text-purple-400" size={18} />
                         </div>
-                        <h3 className="font-semibold text-white text-lg truncate">{d.filename}</h3>
+                        <h3 className="font-semibold text-white text-base truncate">{d.filename}</h3>
                       </div>
                       
-                      <div className="flex flex-wrap gap-3 items-center mb-3 ml-11">
-                        <span className="text-sm text-zinc-400 bg-slate-800/50 px-2.5 py-1 rounded-md">
+                      <div className="flex flex-wrap gap-3 items-center mb-1 ml-12">
+                        <span className="text-xs text-zinc-400 bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-850">
                           {(d.size_bytes / 1024).toFixed(1)} KB
                         </span>
-                        <span className="text-sm text-zinc-500">•</span>
-                        <span className="text-sm text-zinc-400">{d.mime_type}</span>
+                        <span className="text-xs text-zinc-500">•</span>
+                        <span className="text-xs text-zinc-400">{d.mime_type}</span>
                         {(d.chunk_count ?? 0) > 0 && (
                           <>
-                            <span className="text-sm text-zinc-500">•</span>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-900/20 border border-blue-800/50">
-                              <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                              <span className="text-sm text-blue-300">{d.chunk_count} chunks indexed</span>
+                            <span className="text-xs text-zinc-500">•</span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
+                              <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                              <span className="text-xs text-purple-300 font-semibold">{d.chunk_count} chunks indexed</span>
                             </span>
                           </>
                         )}
@@ -523,10 +591,10 @@ export default function Documents() {
 
                       {/* Error Message */}
                       {d.error_message && (
-                        <div className="ml-11 mt-3 p-3 bg-red-900/20 border border-red-800/50 rounded-lg">
+                        <div className="ml-12 mt-3 p-3 bg-red-955/10 border border-red-900/20 rounded-lg">
                           <div className="flex items-start gap-2">
                             <FiAlertTriangle size={16} className="flex-shrink-0 mt-0.5 text-red-400" />
-                            <span className="text-sm text-red-300">{d.error_message}</span>
+                            <span className="text-xs text-red-300">{d.error_message}</span>
                           </div>
                         </div>
                       )}
@@ -534,26 +602,29 @@ export default function Documents() {
 
                     {/* Status Badge & Actions */}
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className={`badge whitespace-nowrap ${
-                        statusStyles[d.status as keyof typeof statusStyles] || "bg-slate-700/30 text-zinc-300 border-slate-600/50"
+                      <span className={`px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border ${
+                        d.status === 'indexed' ? 'bg-green-950/20 text-green-300 border-green-900/30' :
+                        d.status === 'processing' ? 'bg-blue-900/20 text-blue-300 border-blue-900/30 animate-pulse' :
+                        d.status === 'failed' ? 'bg-red-955/20 text-red-300 border-red-900/30' :
+                        'bg-zinc-900 text-zinc-400 border-zinc-800'
                       }`}>
                         {d.status === 'indexed' && '✓ Indexed'}
-                        {d.status === 'processing' && '⟳ Processing'}
+                        {d.status === 'processing' && '⟳ Ingesting'}
                         {d.status === 'failed' && '✕ Failed'}
                       </span>
                       
-                        <button
+                      <button
                         onClick={() => previewDocument(d)}
                         disabled={previewLoading}
-                        className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-white transition hover:border-slate-500 hover:bg-slate-800"
+                        className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-200 hover:text-white transition"
                         title="Preview document chunks"
                       >
-                        {previewLoading && previewingDoc?.id === d.id ? "Loading" : "Preview"}
+                        {previewLoading && previewingDoc?.id === d.id ? "Loading..." : "Preview"}
                       </button>
                       <button
                         onClick={() => deleteDoc(d.id)}
                         disabled={deleting === d.id}
-                        className="p-2.5 rounded-lg hover:bg-red-500/20 transition text-red-400 disabled:opacity-50 disabled:cursor-not-allowed border border-transparent hover:border-red-600/50 group/btn"
+                        className="p-2 rounded-lg hover:bg-red-900/20 border border-transparent hover:border-red-900/30 text-red-400 transition"
                         title="Delete document (Admin only)"
                       >
                         {deleting === d.id ? (
@@ -570,51 +641,74 @@ export default function Documents() {
           )}
         </motion.div>
 
+        {/* Premium slide-out chunk preview drawer */}
+        <AnimatePresence>
           {previewingDoc && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="glass-panel p-6 mt-8">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">Preview: {previewingDoc.filename}</h2>
-                  <p className="text-sm text-zinc-400">Showing the first chunks from the document index.</p>
+            <>
+              {/* Dark backdrop overlay */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-45 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                onClick={closePreview}
+              />
+              
+              {/* Slide-out drawer */}
+              <motion.div 
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 220 }}
+                className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-zinc-950 border-l border-zinc-850 p-6 shadow-2xl flex flex-col h-full overflow-hidden"
+              >
+                <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-900">
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-white truncate" title={previewingDoc.filename}>
+                      Preview: {previewingDoc.filename}
+                    </h2>
+                    <p className="text-xs text-zinc-400 mt-1">Showing first indexed document chunks</p>
+                  </div>
+                  <button
+                    onClick={closePreview}
+                    className="p-2 rounded-lg hover:bg-zinc-900 border border-transparent hover:border-zinc-800 text-zinc-400 hover:text-zinc-200 transition"
+                  >
+                    <FiX size={20} />
+                  </button>
                 </div>
-                <button
-                  onClick={closePreview}
-                  className="rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm text-white hover:border-slate-500"
-                >
-                  Close preview
-                </button>
-              </div>
 
-              {previewLoading ? (
-                <div className="rounded-2xl border border-slate-700 bg-slate-950/80 p-8 text-center text-zinc-400">
-                  Loading preview...
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {previewChunks.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-700 bg-slate-950/80 p-6 text-zinc-400">
-                      No preview chunks available for this document.
+                <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
+                  {previewLoading ? (
+                    <div className="p-12 text-center text-zinc-400 flex flex-col items-center gap-3">
+                      <FiLoader className="animate-spin text-purple-400" size={28} />
+                      <span className="text-sm">Retrieving indexed chunks...</span>
+                    </div>
+                  ) : previewChunks.length === 0 ? (
+                    <div className="rounded-xl border border-zinc-900 bg-zinc-900/20 p-6 text-center text-zinc-400 text-sm">
+                      No chunks available for preview.
                     </div>
                   ) : (
                     previewChunks.map((chunk) => (
-                      <div key={chunk.id} className="rounded-2xl border border-slate-700 bg-slate-900/80 p-4">
-                        <div className="flex items-center justify-between gap-4 mb-2 text-xs uppercase tracking-[0.2em] text-zinc-500">
+                      <div key={chunk.id} className="rounded-xl border border-zinc-900 bg-zinc-900/20 p-4 hover:border-zinc-850 transition">
+                        <div className="flex items-center justify-between gap-4 mb-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-widest">
                           <span>Chunk {chunk.chunk_index}</span>
-                          <span>{chunk.vector_id ? `Vector ${chunk.vector_id}` : "Indexed chunk"}</span>
+                          <span className="text-[10px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-400 font-mono">
+                            {chunk.vector_id ? `Vector ${chunk.vector_id}` : "Indexed"}
+                          </span>
                         </div>
-                        <p className="text-sm leading-7 text-zinc-200 whitespace-pre-wrap">{chunk.text}</p>
+                        <p className="text-sm leading-6 text-zinc-300 whitespace-pre-wrap font-sans">{chunk.text}</p>
                       </div>
                     ))
                   )}
                 </div>
-              )}
-            </motion.div>
+              </motion.div>
+            </>
           )}
-        </main>
+        </AnimatePresence>
+      </main>
     </MainLayout>
   );
 }
-
 
 
 

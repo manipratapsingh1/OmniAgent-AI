@@ -6,6 +6,7 @@ type ChatMode = "fast" | "knowledge";
 let currentController: AbortController | null = null;
 
 export function useChat() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { activeId, setActive, setTrace, setSources } = useStore();
 
   async function send(
@@ -90,7 +91,16 @@ export function useChat() {
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`Streaming chat failed: ${response.statusText}`);
+        const errorText = await response.text().catch(() => response.statusText);
+        // Update the placeholder with error instead of creating a new message
+        useStore.setState((state) => ({
+          messages: state.messages.map((item) =>
+            item.id === placeholderId
+              ? { ...item, content: `Sorry, I couldn't process your request (Error: ${errorText}). Please try again.` }
+              : item,
+          ),
+        }));
+        return;
       }
 
       const reader = response.body.getReader();
@@ -146,6 +156,7 @@ export function useChat() {
 
         readResult = await reader.read();
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errName = typeof error === "object" && error !== null && "name" in error ? (error as { name?: unknown }).name : undefined;
       if (errName === "AbortError") {
@@ -160,16 +171,13 @@ export function useChat() {
       }
 
       console.error("Streaming chat error:", error);
+      // Update the placeholder message with error instead of creating a new one
       useStore.setState((state) => ({
-        messages: [
-          ...state.messages,
-          {
-            id: Date.now() + 2,
-            role: "assistant",
-            content: "Error: Failed to get response. Please try again.",
-            created_at: new Date().toISOString(),
-          },
-        ],
+        messages: state.messages.map((item) =>
+          item.id === placeholderId
+            ? { ...item, content: "I encountered an error. Please try again." }
+            : item,
+        ),
       }));
     } finally {
       currentController = null;

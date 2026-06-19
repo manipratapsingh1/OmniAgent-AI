@@ -2,7 +2,7 @@
 Rate limiting utilities for API protection
 """
 from typing import Dict, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import structlog
 
@@ -20,7 +20,7 @@ class RateLimiter:
         Check if request is allowed under rate limit
         Returns: (is_allowed, info_dict)
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(seconds=window_seconds)
         
         if key not in self.requests:

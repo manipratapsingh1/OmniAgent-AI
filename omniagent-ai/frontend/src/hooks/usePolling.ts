@@ -66,6 +66,7 @@ export function usePolling<T>(
         clearInterval(intervalRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interval, enabled]);
 
   return { data, loading, error, refetch: fetch };

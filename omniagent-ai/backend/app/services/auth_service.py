@@ -72,10 +72,11 @@ class AuthService:
             if not user:
                 raise HTTPException(status_code=401, detail="User not found")
                 
+            new_refresh = create_refresh_token(user.email)
             log.info("token.refreshed", user_id=user.id, email=user.email)
             return TokenResponse(
                 access_token=create_access_token(user.email),
-                refresh_token=refresh_token # Keep same refresh token or rotate
+                refresh_token=new_refresh
             )
         except Exception as e:
             log.warning("token.refresh_failed", error=str(e))

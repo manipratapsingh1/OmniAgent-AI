@@ -6,10 +6,14 @@ Tests: document upload → embedding → vector storage → retrieval → chat
 import asyncio
 import sys
 import json
+import os
 from pathlib import Path
 
+# Set E2E testing flag
+os.environ["IS_E2E_TESTING"] = "true"
+
 # Add backend to path
-backend_path = Path(__file__).parent / "backend"
+backend_path = Path(__file__).parent / "omniagent-ai" / "backend"
 sys.path.insert(0, str(backend_path))
 
 import structlog
@@ -55,6 +59,34 @@ async def test_e2e_pipeline():
                 db.commit()
                 db.refresh(user)
             print(f"✓ User created: ID={user.id}, email={user.email}\n")
+            
+            # Clean up previous data for this test user to keep the test fast and clean
+            print("Cleaning up previous data for test user...")
+            from app.models.document import DocumentChunk
+            from app.models.knowledge import StudyMaterial
+            
+            # Delete from SQL
+            db.query(Message).filter(Message.conversation_id.in_(
+                db.query(Conversation.id).filter(Conversation.user_id == user.id)
+            )).delete(synchronize_session=False)
+            db.query(Conversation).filter(Conversation.user_id == user.id).delete(synchronize_session=False)
+            db.query(StudyMaterial).filter(StudyMaterial.user_id == user.id).delete(synchronize_session=False)
+            db.query(DocumentChunk).filter(DocumentChunk.document_id.in_(
+                db.query(Document.id).filter(Document.user_id == user.id)
+            )).delete(synchronize_session=False)
+            db.query(Document).filter(Document.user_id == user.id).delete(synchronize_session=False)
+            db.commit()
+            
+            # Delete from Chroma
+            try:
+                from app.rag.retriever import vector_store
+                store = vector_store._get_store()
+                if store and store.collection:
+                    store.collection.delete(where={"user_id": user.id})
+                    print("✓ Cleaned up vector database for user ID")
+            except Exception as e:
+                print(f"Warning: could not clean vector database: {e}")
+            print("Cleanup complete.\n")
             
             # Step 2: Upload a test document
             print("STEP 2: Uploading test document...")

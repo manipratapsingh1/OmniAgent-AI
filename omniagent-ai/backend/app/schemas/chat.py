@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -10,12 +10,20 @@ class ChatRequest(BaseModel):
     force_fresh: bool = Field(False, description="Force fresh response, bypass cache")
     system_prompt: Optional[str] = Field(None, max_length=1000, description="Optional custom system prompt or persona for the assistant")
     images: List[str] = Field(default=[], description="List of base64 encoded images for vision support")
+    knowledge_mode: Optional[Literal["auto", "documents_only", "ai_only"]] = Field(
+        "auto",
+        description="Knowledge routing mode: auto (hybrid), documents_only, or ai_only",
+    )
 
 
 class Citation(BaseModel):
     document_id: int
     chunk_index: int
     snippet: str
+    document_name: Optional[str] = None
+    page_number: Optional[int] = None
+    section: Optional[str] = None
+    confidence_score: Optional[float] = None
 
 
 class AgentTrace(BaseModel):

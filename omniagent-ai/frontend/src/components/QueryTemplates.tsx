@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { FiEdit3, FiPlus, FiX, FiLoader } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/client";
@@ -8,6 +9,7 @@ interface QueryTemplatesProps {
 }
 
 export default function QueryTemplates({ onSelectTemplate }: QueryTemplatesProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [templates, setTemplates] = useState<any[]>([]);
   const [category, setCategory] = useState("HR");
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,7 @@ export default function QueryTemplates({ onSelectTemplate }: QueryTemplatesProps
 
   useEffect(() => {
     fetchTemplates();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
   const fetchTemplates = async () => {

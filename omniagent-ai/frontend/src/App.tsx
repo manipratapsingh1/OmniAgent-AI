@@ -10,6 +10,7 @@ import KeyboardShortcuts from "./components/KeyboardShortcuts";
 // Auth Pages
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import SharedConversation from "./pages/SharedConversation";
 
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
@@ -28,6 +29,15 @@ function Protected({ children }: { children: JSX.Element }) {
   return children;
 }
 
+// Admin Route protection wrapper
+function AdminProtected({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();
+  if (loading) return <Loading message="Authenticating..." fullScreen />;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.is_admin && user.role !== "admin") return <Navigate to="/" replace />;
+  return children;
+}
+
 export default function App() {
   const notifications = useNotificationStore((s) => s.notifications);
   const removeNotification = useNotificationStore((s) => s.removeNotification);
@@ -41,6 +51,7 @@ export default function App() {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/share/:shareToken" element={<SharedConversation />} />
 
           {/* Protected Routes */}
           <Route path="/" element={<Protected><Dashboard /></Protected>} />
@@ -48,8 +59,8 @@ export default function App() {
           <Route path="/documents" element={<Protected><Documents /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
           <Route path="/settings" element={<Protected><Settings /></Protected>} />
-          <Route path="/debug" element={<Protected><DebugDashboard /></Protected>} />
-          <Route path="/admin" element={<Protected><AdminDashboard /></Protected>} />
+          <Route path="/debug" element={<AdminProtected><DebugDashboard /></AdminProtected>} />
+          <Route path="/admin" element={<AdminProtected><AdminDashboard /></AdminProtected>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

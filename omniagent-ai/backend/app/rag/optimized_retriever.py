@@ -83,7 +83,10 @@ class OptimizedRAGRetriever:
                 "include": ["documents", "metadatas", "distances"],
             }
             if filters:
-                query_kwargs["where"] = filters
+                if len(filters) > 1 and not ("$and" in filters or "$or" in filters):
+                    query_kwargs["where"] = {"$and": [{k: v} for k, v in filters.items()]}
+                else:
+                    query_kwargs["where"] = filters
 
             result = self.chroma.query(**query_kwargs)
 
@@ -93,15 +96,26 @@ class OptimizedRAGRetriever:
                 distances = result.get("distances", [[]])[0] if result.get("distances") else [0] * len(docs)
 
                 # Convert distances to a 0..1 ish score (lower distance -> higher score)
-                return [
-                    {
+                scored_results = []
+                for i, (doc, meta) in enumerate(zip(docs, metas)):
+                    dist = distances[i] if distances and i < len(distances) else 0.0
+                    if dist < 0.0:
+                        score = 1.0
+                    elif dist <= 2.0:
+                        score = 1.0 - dist
+                    else:
+                        score = 1.0 / (1.0 + dist / 10.0)
+                    scored_results.append({
                         "text": doc,
                         "document_id": meta.get("document_id"),
                         "chunk_index": meta.get("chunk_index", i),
-                        "score": 1.0 - distances[i] if distances and i < len(distances) else 0.0,
-                    }
-                    for i, (doc, meta) in enumerate(zip(docs, metas))
-                ]
+                        "score": score,
+                        "distance": dist,
+                        "page_number": meta.get("page_number"),
+                        "section": meta.get("section"),
+                        "filename": meta.get("filename"),
+                    })
+                return scored_results
 
             return []
         except Exception as e:

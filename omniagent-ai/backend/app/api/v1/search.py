@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 from app.deps import db_session, current_user
@@ -15,8 +15,7 @@ class ConversationSummary(BaseModel):
     title: str
     updated_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageResult(BaseModel):
@@ -24,8 +23,7 @@ class MessageResult(BaseModel):
     content: str
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/search/conversations", response_model=List[ConversationSummary])

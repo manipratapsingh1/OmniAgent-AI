@@ -1,5 +1,5 @@
 from functools import lru_cache
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,11 +31,12 @@ class Settings(BaseSettings):
 
     RATE_LIMIT_PER_MINUTE: int = 120  # Increased from 60 to allow for polling and retries
     CORS_ORIGINS: str = "http://localhost:5173"
+    FRONTEND_URL: str = "http://localhost:5173"
     
     # New feature settings
     ENABLE_CELERY: bool = False
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    CELERY_BROKER_URL: str = "redis://redis:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://redis:6379/2"
     
     # API Keys
     API_KEY_EXPIRY_DAYS: int = 365
@@ -52,7 +53,7 @@ class Settings(BaseSettings):
     
     # Performance timeouts
     OLLAMA_EMBED_TIMEOUT: int = 30  # seconds - shorter for fail-fast retries
-    OLLAMA_GENERATE_TIMEOUT: int = 60  # seconds
+    OLLAMA_GENERATE_TIMEOUT: int = 180  # seconds
     FAST_RAG_MODEL: str = "phi3:mini"  # Fast model for RAG queries
     
     # Notifications
@@ -65,7 +66,81 @@ class Settings(BaseSettings):
     # Assistant feature flag
     ASSISTANT_ENABLED: bool = True
 
+    # LLM Provider API Keys
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+
+    # Model routing defaults
+    DEFAULT_LLM_PROVIDER: str = "ollama"
+    CODING_PROVIDER: str = "anthropic"
+    RESEARCH_PROVIDER: str = "gemini"
+    FAST_PROVIDER: str = "groq"
+    FALLBACK_PROVIDER: str = "ollama"
+
+    # Web search
+    ENABLE_WEB_SEARCH: bool = False
+    WEB_SEARCH_PROVIDER: str = "duckduckgo"  # duckduckgo | tavily | brave | serpapi | searxng
+    TAVILY_API_KEY: str = ""
+    BRAVE_API_KEY: str = ""
+    SERPAPI_KEY: str = ""
+    SEARXNG_BASE_URL: str = ""
+    WEB_SEARCH_MAX_RESULTS: int = 5
+
+    # Caching
+    CACHE_TTL_SECONDS: int = 300
+
+    @model_validator(mode="after")
+    def validate_prod_settings(self) -> 'Settings':
+        if self.APP_ENV == "production":
+            self.APP_DEBUG = False
+            # Check secret key safety in production mode
+            if self.SECRET_KEY in ("change-me-to-a-very-long-safe-secret-key-32-chars", "insecure-default-key-replace-in-prod"):
+                raise ValueError("Insecure default SECRET_KEY in production environment!")
+        return self
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
+
+
+def check_required_services(settings: Settings):
+    """Perform startup checks for required services (Ollama, Chroma, Redis) and log warnings if missing."""
+    import socket
+    from urllib.parse import urlparse
+    import structlog
+
+    log = structlog.get_logger("config_checks")
+
+    # 1. Check Redis
+    redis_host = "localhost"
+    redis_port = 6379
+    try:
+        redis_url = urlparse(settings.REDIS_URL)
+        redis_host = redis_url.hostname or "localhost"
+        redis_port = redis_url.port or 6379
+        with socket.create_connection((redis_host, redis_port), timeout=2.0):
+            log.info("service_check.redis", status="available")
+    except Exception as e:
+        log.warning("service_check.redis", status="unavailable", host=redis_host, port=redis_port, error=str(e), msg="Redis is offline. Cache and background features will degrade gracefully.")
+
+    # 2. Check ChromaDB
+    try:
+        with socket.create_connection((settings.CHROMA_HOST, settings.CHROMA_PORT), timeout=2.0):
+            log.info("service_check.chromadb", status="available")
+    except Exception as e:
+        log.warning("service_check.chromadb", status="unavailable", host=settings.CHROMA_HOST, port=settings.CHROMA_PORT, error=str(e), msg="ChromaDB is offline. Document vector ingestion and retrieval will fail.")
+
+    # 3. Check Ollama
+    ollama_host = "localhost"
+    ollama_port = 11434
+    try:
+        ollama_url = urlparse(settings.OLLAMA_BASE_URL)
+        ollama_host = ollama_url.hostname or "localhost"
+        ollama_port = ollama_url.port or 11434
+        with socket.create_connection((ollama_host, ollama_port), timeout=2.0):
+            log.info("service_check.ollama", status="available")
+    except Exception as e:
+        log.warning("service_check.ollama", status="unavailable", host=ollama_host, port=ollama_port, error=str(e), msg="Ollama is offline. Local LLM generation and embedding will fail.")

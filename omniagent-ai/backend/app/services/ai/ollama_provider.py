@@ -10,6 +10,13 @@ class OllamaProvider(AIProvider):
         self.settings = get_settings()
         self.client = ollama
 
+    async def is_healthy(self) -> bool:
+        """Check if Ollama client is healthy."""
+        try:
+            return await self.client.is_healthy()
+        except Exception:
+            return False
+
     async def generate(self, prompt: str, **kwargs) -> str:
         """Generate a complete response from Ollama."""
         model = kwargs.get("model") or self.settings.OLLAMA_DEFAULT_MODEL

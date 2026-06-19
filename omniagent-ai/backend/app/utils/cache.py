@@ -2,7 +2,7 @@
 Caching utilities for improving performance
 """
 from typing import Any, Optional, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import json
 import structlog
@@ -22,7 +22,7 @@ class SimpleCache:
             return None
         
         value, expiry = self.data[key]
-        if datetime.utcnow() > expiry:
+        if datetime.now(timezone.utc) > expiry:
             del self.data[key]
             return None
         
@@ -30,7 +30,7 @@ class SimpleCache:
     
     def set(self, key: str, value: Any, ttl_seconds: int = 300) -> None:
         """Set value in cache with TTL"""
-        expiry = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+        expiry = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
         self.data[key] = (value, expiry)
         log.debug("cache.set", key=key, ttl=ttl_seconds)
     

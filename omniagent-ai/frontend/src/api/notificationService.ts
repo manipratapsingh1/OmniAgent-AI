@@ -12,6 +12,7 @@ export const notificationService = {
     try {
       const response = await api.get<Notification[]>("/notifications");
       return response.data || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log full error details for debugging
       const errorMsg = getErrorMessage(error);

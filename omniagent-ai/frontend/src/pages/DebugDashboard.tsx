@@ -49,6 +49,7 @@ export default function DebugDashboard() {
   };
 
   useEffect(() => {
+    document.title = "Debug status | OmniAgent AI";
     loadStatus();
     const interval = window.setInterval(loadStatus, 30000);
     return () => window.clearInterval(interval);

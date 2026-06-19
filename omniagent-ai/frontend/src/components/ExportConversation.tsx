@@ -5,11 +5,14 @@ import { api } from "../api/client";
 
 interface ExportConversationProps {
   conversationId: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   messages: any[];
 }
 
 export default function ExportConversation({ conversationId, messages }: ExportConversationProps) {
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [format, setFormat] = useState<"markdown" | "json" | "csv">("markdown");
   const [copied, setCopied] = useState(false);
 

@@ -3,7 +3,7 @@
 from typing import List, Dict, Any, Optional
 import structlog
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlmodel import Session, select
 
 from app.models.sharing_and_faq import ConversationShare, FrequentlyAskedQuestion, QueryTemplate
@@ -30,7 +30,7 @@ class SharingAndFAQService:
             expires_at = None
             
             if expires_in_hours:
-                expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+                expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
             
             share = ConversationShare(
                 conversation_id=conversation_id,
@@ -66,7 +66,7 @@ class SharingAndFAQService:
                 return None
             
             # Check expiration
-            if share.expires_at and share.expires_at < datetime.utcnow():
+            if share.expires_at and share.expires_at < datetime.now(timezone.utc):
                 return None
             
             # Increment access count

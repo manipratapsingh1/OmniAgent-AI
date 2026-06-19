@@ -39,6 +39,7 @@ export function useAuth(): UseAuthState {
         setUser(null);
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const login = async (email: string, password: string) => {

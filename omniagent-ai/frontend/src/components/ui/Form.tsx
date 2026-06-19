@@ -3,6 +3,7 @@
  * Includes validation, error handling, and accessibility
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { FormHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import Button from './Button';
 

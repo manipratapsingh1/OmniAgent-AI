@@ -18,6 +18,7 @@ def ingest_document(user_id: int, filename: str, content_type: str, raw_bytes: b
         import asyncio
 
         db = get_session()
+        db.expire_on_commit = False
 
         # Mark job as processing if job_id provided
         if job_id:
@@ -25,7 +26,7 @@ def ingest_document(user_id: int, filename: str, content_type: str, raw_bytes: b
 
         # DocumentService.upload is async — run it in an event loop
         # Pass job_id so upload can report progress to BackgroundJobService
-        result_doc = asyncio.run(DocumentService(db).upload(user_id, filename, content_type, raw_bytes, job_id=job_id))
+        result_doc = asyncio.run(DocumentService(db).upload(user_id, filename, content_type, raw_bytes, job_id=job_id, await_workflow=True))
 
         # Mark job completed
         if job_id:

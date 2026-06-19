@@ -1,7 +1,7 @@
 // File Analyzer - Analyze uploaded files
 import React, { useState } from 'react';
 import { Upload, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../api/client';
 
 interface FileAnalyzerProps {
   onResult: (result: unknown) => void;
@@ -9,13 +9,13 @@ interface FileAnalyzerProps {
 
 interface AnalysisResult {
   type?: string;
-  line_count?: number;
-  word_count?: number;
-  char_count?: number;
+  lines?: number;
+  words?: number;
+  characters?: number;
   avg_line_length?: number;
   structure?: unknown;
-  row_count?: number;
-  column_count?: number;
+  rows?: number;
+  columns?: number;
   preview?: string[][];
 }
 
@@ -44,7 +44,7 @@ const FileAnalyzer = ({ onResult }: FileAnalyzerProps) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post('/api/v1/tools/analyze-file', formData, {
+      const response = await api.post('/tools/analyze-file', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -127,19 +127,19 @@ const FileAnalyzer = ({ onResult }: FileAnalyzerProps) => {
               <div>
                 <p className="text-gray-400">Lines</p>
                 <p className="text-2xl font-bold text-blue-400">
-                  {analysis.line_count}
+                  {analysis.lines}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Words</p>
                 <p className="text-2xl font-bold text-blue-400">
-                  {analysis.word_count}
+                  {analysis.words}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Characters</p>
                 <p className="text-2xl font-bold text-blue-400">
-                  {analysis.char_count}
+                  {analysis.characters}
                 </p>
               </div>
               <div>
@@ -172,13 +172,13 @@ const FileAnalyzer = ({ onResult }: FileAnalyzerProps) => {
                 <div>
                   <p className="text-gray-400">Rows</p>
                   <p className="text-lg font-bold text-blue-400">
-                    {analysis.row_count}
+                    {analysis.rows}
                   </p>
                 </div>
                 <div>
                   <p className="text-gray-400">Columns</p>
                   <p className="text-lg font-bold text-blue-400">
-                    {analysis.column_count}
+                    {analysis.columns}
                   </p>
                 </div>
               </div>

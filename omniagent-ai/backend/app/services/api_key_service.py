@@ -1,6 +1,6 @@
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlmodel import Session, select
 from app.models.api_key import APIKey
 from typing import Tuple, Optional
@@ -18,7 +18,7 @@ class APIKeyService:
         raw_key = secrets.token_urlsafe(32)
         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
         
-        expires_at = datetime.utcnow() + timedelta(days=expires_in_days) if expires_in_days else None
+        expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days) if expires_in_days else None
         
         api_key = APIKey(
             user_id=user_id,
@@ -46,11 +46,11 @@ class APIKeyService:
         if not key_obj:
             return False, None
         
-        if key_obj.expires_at and key_obj.expires_at < datetime.utcnow():
+        if key_obj.expires_at and key_obj.expires_at < datetime.now(timezone.utc):
             return False, None
         
         # Update last used
-        key_obj.last_used = datetime.utcnow()
+        key_obj.last_used = datetime.now(timezone.utc)
         self.db.add(key_obj)
         self.db.commit()
         

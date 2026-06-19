@@ -4,9 +4,9 @@ Optimized settings for performance and reliability
 """
 import os
 from functools import lru_cache
-from typing import Optional
+from typing import List, Optional
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -56,11 +56,12 @@ class Settings(BaseSettings):
     JWT_EXPIRY_MINUTES: int = 1440  # 24 hours
     API_KEY_EXPIRY_DAYS: int = 90
     
-    # Cors
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
+    # Cors — stored as comma-separated strings for .env compatibility
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_CREDENTIALS: bool = True
-    CORS_METHODS: list = ["*"]
-    CORS_HEADERS: list = ["*"]
+    CORS_METHODS: str = "*"
+    CORS_HEADERS: str = "*"
     
     # Performance optimization
     CACHE_TTL_SECONDS: int = 300  # 5 minutes default cache TTL
@@ -93,8 +94,28 @@ class Settings(BaseSettings):
     
     # Document processing
     MAX_DOCUMENT_SIZE_MB: int = 50
-    ALLOWED_DOCUMENT_TYPES: list = [".pdf", ".txt", ".md", ".docx"]
+    ALLOWED_DOCUMENT_TYPES: str = ".pdf,.txt,.md,.docx"
     MAX_DOCUMENTS_PER_USER: int = 1000
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Parse CORS_ORIGINS into a list."""
+        return [s.strip() for s in self.CORS_ORIGINS.split(",") if s.strip()]
+
+    @property
+    def cors_methods_list(self) -> List[str]:
+        """Parse CORS_METHODS into a list."""
+        return [s.strip() for s in self.CORS_METHODS.split(",") if s.strip()]
+
+    @property
+    def cors_headers_list(self) -> List[str]:
+        """Parse CORS_HEADERS into a list."""
+        return [s.strip() for s in self.CORS_HEADERS.split(",") if s.strip()]
+
+    @property
+    def allowed_doc_types_list(self) -> List[str]:
+        """Parse ALLOWED_DOCUMENT_TYPES into a list."""
+        return [s.strip() for s in self.ALLOWED_DOCUMENT_TYPES.split(",") if s.strip()]
     
     # RAG optimization
     RAG_CHUNK_SIZE: int = 512
@@ -115,9 +136,7 @@ class Settings(BaseSettings):
     ENABLE_AUDIT_LOG: bool = True
     ENABLE_SEARCH: bool = True
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 @lru_cache()
@@ -132,10 +151,10 @@ def get_settings() -> Settings:
 # Production-specific middleware settings
 MIDDLEWARE_CONFIG = {
     "cors": {
-        "allow_origins": get_settings().CORS_ORIGINS,
+        "allow_origins": get_settings().cors_origins_list,
         "allow_credentials": get_settings().CORS_CREDENTIALS,
-        "allow_methods": get_settings().CORS_METHODS,
-        "allow_headers": get_settings().CORS_HEADERS,
+        "allow_methods": get_settings().cors_methods_list,
+        "allow_headers": get_settings().cors_headers_list,
     },
     "rate_limit": {
         "enabled": get_settings().RATE_LIMIT_ENABLED,

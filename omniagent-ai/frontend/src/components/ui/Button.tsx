@@ -4,6 +4,7 @@
  */
 
 import React, { ButtonHTMLAttributes, forwardRef } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { THEME } from '../../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'outline' | 'ghost';

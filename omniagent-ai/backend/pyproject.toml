@@ -4,7 +4,7 @@ version = "2.0.0"
 description = "Production-ready AI agent platform with RAG, memory, and task automation"
 requires-python = ">=3.11"
 dependencies = [
-  "fastapi==0.115.0",
+  "fastapi>=0.115.0",
   "uvicorn[standard]==0.30.6",
   "gunicorn==23.0.0",
   "sqlmodel==0.0.22",
@@ -14,14 +14,14 @@ dependencies = [
   "pydantic-settings==2.5.2",
   "python-jose[cryptography]==3.3.0",
   "passlib[bcrypt]==1.7.4.post1",
-  "python-multipart==0.0.9",
+  "python-multipart>=0.0.9",
   "httpx==0.27.2",
   "redis==5.0.8",
   "rq==1.16.2",
   "chromadb==1.5.9",
   "langgraph==0.2.34",
   "langchain-core==0.3.10",
-  "pypdf==5.0.0",
+  "pypdf>=5.0.0",
   "pdfplumber==0.11.0",
   "python-docx==1.1.2",
   "python-pptx==1.0.2",
@@ -33,12 +33,12 @@ dependencies = [
   "tenacity==9.0.0",
   "structlog==24.4.0",
   "orjson==3.10.7",
-  "python-dotenv==1.0.1",
+  "python-dotenv>=1.0.1",
   "websockets==14.1",
   "faiss-cpu==1.8.0",
   "numpy==1.26.4",
   "celery==5.3.4",
-  "psutil==6.1.0",
+  "psutil>=6.1.0",
   "aiofiles==24.1.0",
   "slowapi==0.1.9",
   "openai>=1.0.0"
@@ -68,6 +68,16 @@ select = ["E", "W", "F", "N", "UP", "I", "C4", "B", "A"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+omit = [
+    "app/api/v1/debug.py",
+    "app/config_production.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
 
 [tool.mypy]
 python_version = "3.11"

@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import MainLayout from "../layouts/MainLayout";
 import ChatWindow from "../components/chat/ChatWindow";
 import AgentTracePanel from "../components/chat/AgentTracePanel";
@@ -6,6 +7,10 @@ import MemoryPanel from "../components/chat/MemoryPanel";
 import { motion } from "framer-motion";
 
 export default function Chat() {
+  useEffect(() => {
+    document.title = "Chat | OmniAgent AI";
+  }, []);
+
   return (
     <MainLayout>
       <main className="p-6 lg:p-8 h-full">

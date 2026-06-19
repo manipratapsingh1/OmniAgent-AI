@@ -8,6 +8,7 @@ interface DocumentFAQsProps {
 }
 
 export default function DocumentFAQs({ documentId }: DocumentFAQsProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [faqs, setFaqs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -16,6 +17,7 @@ export default function DocumentFAQs({ documentId }: DocumentFAQsProps) {
 
   useEffect(() => {
     fetchFAQs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
 
   const fetchFAQs = async () => {

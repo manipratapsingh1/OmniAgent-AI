@@ -6,6 +6,10 @@ class AIProvider:
 
     name: str = "base"
 
+    async def is_healthy(self) -> bool:
+        """Verify provider connection and key status."""
+        return True
+
     async def generate(self, prompt: str, **kwargs) -> str:
         raise NotImplementedError()
 

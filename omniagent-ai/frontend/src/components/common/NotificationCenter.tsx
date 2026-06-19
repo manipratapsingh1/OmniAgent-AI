@@ -42,6 +42,7 @@ export default function NotificationCenter({
       try {
         const notifs = await notificationService.getUnread();
         setBackendNotifications(notifs || []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         // Log error but don't show it to user - notifications are optional
         console.debug("Failed to load notifications (non-critical):", err.message);
@@ -60,6 +61,7 @@ export default function NotificationCenter({
     // Poll every 30 seconds
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const markAsRead = async (notificationId: number) => {

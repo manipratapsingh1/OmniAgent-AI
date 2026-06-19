@@ -149,9 +149,14 @@ def get_citations_with_fallback(
                 extracted_count=len(citations),
                 retrieved_count=len(all_sources),
             )
+            if all_sources:
+                return [all_sources[0]], False
             return [], False
     else:
-        # No citations found in response
+        # No citations found in response - fallback to returning the top matching retrieved source
+        if all_sources:
+            log.info("citations.fallback_to_top_source", total_sources=len(all_sources))
+            return [all_sources[0]], False
         log.debug("citations.not_found", response_len=len(response))
         return [], False
 

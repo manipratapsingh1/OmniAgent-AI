@@ -1,9 +1,10 @@
 import time
+import asyncio
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
-from pydantic import BaseModel
-from sqlmodel import Session, select
-from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, BackgroundTasks
+from pydantic import BaseModel, ConfigDict
+from sqlmodel import Session, select, col
+from typing import List, Optional, Dict, Any, cast
 
 from app.deps import db_session, current_user, require_admin
 from app.models.user import User
@@ -18,6 +19,7 @@ from app.llm.prompts import RESEARCH_SYSTEM
 from app.rag.retriever import retrieve, get_optimized_retriever
 from app.repositories.document_repo import DocumentRepo
 from app import metrics as app_metrics
+from app.utils.security import sanitize_filename
 
 router = APIRouter()
 ALLOWED = {
@@ -38,6 +40,10 @@ ALLOWED = {
 
 def _allowed_file(filename: str, content_type: str) -> bool:
     lower_name = filename.lower()
+    # Explicitly block executables and scripting files for reliability and security hardening
+    blocked_exts = (".exe", ".bat", ".sh", ".cmd", ".msi", ".vbs", ".scr", ".js", ".vbe", ".jse", ".wsf", ".wsh")
+    if lower_name.endswith(blocked_exts):
+        return False
     allowed_ext = (".md", ".txt", ".pdf", ".markdown", ".docx", ".pptx", ".html", ".htm", ".csv", ".xlsx", ".png", ".jpg", ".jpeg", ".webp")
     return lower_name.endswith(allowed_ext) or content_type in ALLOWED
 
@@ -54,16 +60,14 @@ class DocumentChunkOut(BaseModel):
     text: str
     vector_id: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentPreviewResponse(BaseModel):
     document: DocumentOut
     chunks: List[DocumentChunkOut]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/{doc_id}/preview", response_model=DocumentPreviewResponse)
@@ -72,14 +76,17 @@ def preview_document(
     db: Session = Depends(db_session),
     user: User = Depends(current_user)
 ):
+    if user.id is None:
+        raise HTTPException(status_code=401, detail="User ID not found")
+
     doc = DocumentRepo(db).get(doc_id)
     if not doc or doc.user_id != user.id:
         raise HTTPException(status_code=404, detail="Document not found")
 
     chunks = db.exec(
         select(DocumentChunk)
-        .where(DocumentChunk.document_id == doc_id)
-        .order_by(DocumentChunk.chunk_index)
+        .where(col(DocumentChunk.document_id) == doc_id)
+        .order_by(col(DocumentChunk.chunk_index))
         .limit(8)
     ).all()
 
@@ -120,7 +127,16 @@ def retriever_cache_stats(
 async def upload(file: UploadFile = File(...), db: Session = Depends(db_session), user: User = Depends(current_user)):
     """Upload document"""
     try:
-        filename = (file.filename or "").lower()
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+
+        filename_raw = cast(str, file.filename or "")
+        valid_name, safe_filename, name_error = sanitize_filename(filename_raw)
+        if not valid_name:
+            raise HTTPException(status_code=400, detail=name_error)
+
+        filename = safe_filename.lower()
         if not _allowed_file(filename, file.content_type or ""):
             raise HTTPException(
                 status_code=400,
@@ -146,14 +162,14 @@ async def upload(file: UploadFile = File(...), db: Session = Depends(db_session)
         log = structlog.get_logger("document_api")
         log.info(
             "document.upload.attempt",
-            user_id=user.id,
+            user_id=user_id,
             filename=filename,
             file_size_kb=len(raw) / 1024
         )
         
         doc = await DocumentService(db).upload(
-            user.id,
-            file.filename,
+            user_id,
+            filename_raw,
             file.content_type or "application/octet-stream",
             raw,
         )
@@ -183,10 +199,15 @@ async def upload_knowledge_base(
     These documents will be used to answer all users' questions.
     """
     try:
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+
         import structlog
         log = structlog.get_logger("document_api")
         
-        filename = (file.filename or "").lower()
+        filename_raw = cast(str, file.filename or "")
+        filename = filename_raw.lower()
         if not _allowed_file(filename, file.content_type or ""):
             raise HTTPException(
                 status_code=400,
@@ -209,15 +230,15 @@ async def upload_knowledge_base(
         
         log.info(
             "document.knowledge_base_upload.attempt",
-            admin_id=user.id,
+            admin_id=user_id,
             filename=filename,
             file_size_kb=len(raw) / 1024
         )
         
         # Upload the document as knowledge base content
         doc = await DocumentService(db).upload(
-            user.id,
-            file.filename,
+            user_id,
+            filename_raw,
             file.content_type or "application/octet-stream",
             raw,
             is_knowledge_base=True,
@@ -256,14 +277,17 @@ def list_knowledge_base_docs(
     """List all knowledge base documents."""
     from app.models.document import Document
     docs = db.exec(
-        select(Document).where(Document.is_knowledge_base == True)
+        select(Document).where(col(Document.is_knowledge_base) == True)
     ).all()
     return [DocumentOut(**d.model_dump()) for d in docs]
 
 
 @router.get("/", response_model=List[DocumentOut])
 def list_docs(db: Session = Depends(db_session), user: User = Depends(current_user)):
-    docs = DocumentService(db).list_for_user(user.id)
+    if user.id is None:
+        raise HTTPException(status_code=401, detail="User ID not found")
+    user_id = cast(int, user.id)
+    docs = DocumentService(db).list_for_user(user_id)
     return [DocumentOut(**d.model_dump()) for d in docs]
 
 
@@ -274,8 +298,11 @@ def search_docs(
     user: User = Depends(current_user)
 ):
     """Search documents by filename"""
+    if user.id is None:
+        raise HTTPException(status_code=401, detail="User ID not found")
+    user_id = cast(int, user.id)
     from app.repositories.document_repo import DocumentRepo
-    docs = DocumentRepo(db).search_for_user(user.id, q)
+    docs = DocumentRepo(db).search_for_user(user_id, q)
     return [DocumentOut(**d.model_dump()) for d in docs]
 
 
@@ -293,6 +320,9 @@ async def rag_search_docs(
     Returns matching chunks with their document info.
     """
     try:
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
         from app.rag.retriever import retrieve
         
         # Build filters for retriever (document-level filters can be passed)
@@ -302,7 +332,7 @@ async def rag_search_docs(
             retriever_filters = {"status": status}
 
         results = await retrieve(
-            user_id=user.id,
+            user_id=user_id,
             query=q,
             k=max(k + skip, k),
             filters=retriever_filters,
@@ -316,7 +346,7 @@ async def rag_search_docs(
             if doc_id:
                 from app.repositories.document_repo import DocumentRepo
                 doc = DocumentRepo(db).get(doc_id)
-                if doc and doc.user_id == user.id:
+                if doc and doc.user_id == user_id:
                     enhanced_results.append({
                         "chunk_text": result.get("text", ""),
                         "chunk_index": result.get("chunk_index", 0),
@@ -335,9 +365,9 @@ async def rag_search_docs(
                     select(DocumentChunk, Document)
                     .where(
                         and_(
-                            Document.id == DocumentChunk.document_id,
-                            Document.user_id == user.id,
-                            DocumentChunk.text.ilike(q_like),
+                            col(Document.id) == col(DocumentChunk.document_id),
+                            col(Document.user_id) == user_id,
+                            col(DocumentChunk.text).ilike(q_like),
                         )
                     )
                     .limit(k)
@@ -372,8 +402,11 @@ def filter_docs(
     user: User = Depends(current_user)
 ):
     """Filter documents by status"""
+    if user.id is None:
+        raise HTTPException(status_code=401, detail="User ID not found")
+    user_id = cast(int, user.id)
     from app.repositories.document_repo import DocumentRepo
-    docs = DocumentRepo(db).get_by_status(user.id, status)
+    docs = DocumentRepo(db).get_by_status(user_id, status)
     return [DocumentOut(**d.model_dump()) for d in docs]
 
 
@@ -381,25 +414,50 @@ def filter_docs(
 def delete_doc(doc_id: int, db: Session = Depends(db_session), user: User = Depends(current_user)):
     """Delete document - users can delete their own documents"""
     try:
-        DocumentService(db).delete(user.id, doc_id)
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+        DocumentService(db).delete(user_id, doc_id)
         return {"status": "deleted"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@router.get("/{doc_id}", response_model=DocumentOut)
+def get_document(doc_id: int, db: Session = Depends(db_session), user: User = Depends(current_user)):
+    """Get document by ID"""
+    if user.id is None:
+        raise HTTPException(status_code=401, detail="User ID not found")
+    from app.repositories.document_repo import DocumentRepo
+    doc = DocumentRepo(db).get(doc_id)
+    if not doc or doc.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return DocumentOut(**doc.model_dump())
+
+
 @router.post("/upload_job")
 async def upload_job(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(db_session),
     user: User = Depends(current_user),
 ):
     """Upload a document and enqueue background ingestion job."""
     try:
-        filename = (file.filename or "").lower()
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+
+        filename_raw = cast(str, file.filename or "")
+        valid_name, safe_filename, name_error = sanitize_filename(filename_raw)
+        if not valid_name:
+            raise HTTPException(status_code=400, detail=name_error)
+
+        filename = safe_filename.lower()
         if not _allowed_file(filename, file.content_type or ""):
             raise HTTPException(
                 status_code=400,
-                detail="Unsupported file type. Allowed: PDF, TXT, MD, DOCX, PPTX, HTML",
+                detail="Unsupported file type. Allowed: PDF, TXT, MD, DOCX, PPTX, HTML, CSV, XLSX",
             )
 
         raw = await file.read()
@@ -409,26 +467,54 @@ async def upload_job(
         if len(raw) == 0:
             raise HTTPException(status_code=400, detail="File is empty")
 
-        job = BackgroundJobService(db).create_job(user.id, "ingest_document")
+        job = BackgroundJobService(db).create_job(user_id, "ingest_document")
 
-        # Enqueue to RQ
+        # Check for active RQ workers on the queue
+        use_rq = False
         try:
-            rq_job = default_queue.enqueue(
-                "app.workers.jobs.ingest_document",
-                user.id,
-                file.filename,
+            from rq import Worker
+            from app.workers.queue import redis_conn
+            workers = Worker.all(connection=redis_conn)
+            active_workers = [w for w in workers if "omniagent" in w.queue_names()]
+            if active_workers:
+                use_rq = True
+        except Exception:
+            use_rq = False
+
+        if use_rq:
+            # Enqueue to RQ
+            try:
+                rq_job = default_queue.enqueue(
+                    "app.workers.jobs.ingest_document",
+                    user_id,
+                    filename_raw,
+                    file.content_type or "application/octet-stream",
+                    raw,
+                    cast(int, job.id),
+                )
+                if rq_job and hasattr(rq_job, "id"):
+                    job.task_id = getattr(rq_job, "id")
+                    db.add(job)
+                    db.commit()
+                    db.refresh(job)
+            except Exception as e:
+                BackgroundJobService(db).update_status(job.id, "failed", error=str(e))
+                raise HTTPException(status_code=500, detail=f"Failed to enqueue ingestion job: {str(e)}")
+        else:
+            # Fallback to local background tasks
+            from app.workers.jobs import ingest_document
+            background_tasks.add_task(
+                ingest_document,
+                user_id,
+                filename_raw,
                 file.content_type or "application/octet-stream",
                 raw,
-                job.id,
+                cast(int, job.id),
             )
-            if rq_job and hasattr(rq_job, "id"):
-                job.task_id = getattr(rq_job, "id")
-                db.add(job)
-                db.commit()
-                db.refresh(job)
-        except Exception as e:
-            BackgroundJobService(db).update_status(job.id, "failed", error=str(e))
-            raise HTTPException(status_code=500, detail=f"Failed to enqueue ingestion job: {str(e)}")
+            job.task_id = f"local-task-{job.id}"
+            db.add(job)
+            db.commit()
+            db.refresh(job)
 
         return {"job_id": job.id, "task_id": job.task_id, "status": job.status}
 
@@ -446,9 +532,13 @@ async def document_qa(
 ):
     """Ask questions against indexed documents."""
     try:
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+
         if request.document_id:
             doc = DocumentRepo(db).get(request.document_id)
-            if not doc or doc.user_id != user.id:
+            if not doc or doc.user_id != user_id:
                 raise HTTPException(status_code=404, detail="Document not found")
 
         app_metrics.CHAT_REQUESTS.labels(endpoint="document_qa").inc()
@@ -456,7 +546,7 @@ async def document_qa(
 
         filters = {"document_id": request.document_id} if request.document_id else None
         ctx = await retrieve(
-            user_id=user.id,
+            user_id=user_id,
             query=request.question,
             k=request.k,
             filters=filters,
@@ -472,7 +562,7 @@ async def document_qa(
                 trace=[],
             )
 
-        context_text = "\n\n".join([f"[doc:{c.get('document_id')}#{c.get('chunk_index')}] {c.get('text')[:500]}" for c in ctx])
+        context_text = "\n\n".join([f"[doc:{c.get('document_id')}#{c.get('chunk_index')}] {(c.get('text') or '')[:500]}" for c in ctx if c is not None])
         prompt = (
             f"You are a document assistant. Use only the information below to answer the question. "
             f"If the documents do not contain the answer, say 'I don't know'.\n\n"
@@ -491,12 +581,12 @@ async def document_qa(
 
         sources = [
             Citation(
-                document_id=c.get("document_id"),
-                chunk_index=c.get("chunk_index"),
+                document_id=int(c.get("document_id") or 0),
+                chunk_index=int(c.get("chunk_index") or 0),
                 snippet=(c.get("text") or "")[:240],
             )
             for c in ctx
-            if c.get("document_id") is not None
+            if c is not None and c.get("document_id") is not None
         ]
 
         return ChatResponse(
@@ -522,15 +612,21 @@ async def upload_and_qa(
     """Upload a document, index it, then run a quick RAG Q&A and return an answer."""
     # Reuse existing upload flow to index the document
     try:
+        if user.id is None:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        user_id = cast(int, user.id)
+
+        filename_raw = cast(str, file.filename or "unknown")
+
         # Perform upload (this will index into vector DB)
-        doc = await DocumentService(db).upload(user.id, file.filename, file.content_type or "application/octet-stream", await file.read())
+        doc = await DocumentService(db).upload(user_id, filename_raw, file.content_type or "application/octet-stream", await file.read())
 
         # Wait a short moment to ensure vector DB has the new vectors (ingest is synchronous here)
         await asyncio.sleep(0.2)
 
         # Retrieve top-k chunks for the question from this user's docs
         ctx = await retrieve(
-            user_id=user.id,
+            user_id=user_id,
             query=question,
             k=6,
             db=db,
@@ -538,7 +634,7 @@ async def upload_and_qa(
 
         context_text = ""
         if ctx:
-            context_text = "\n\n".join([f"[doc:{c.get('document_id')}#{c.get('chunk_index')}] {c.get('text')[:500]}" for c in ctx])
+            context_text = "\n\n".join([f"[doc:{c.get('document_id')}#{c.get('chunk_index')}] {(c.get('text') or '')[:500]}" for c in ctx if c is not None])
         else:
             context_text = "(no relevant documents found)"
 
@@ -547,8 +643,8 @@ async def upload_and_qa(
         answer = await ollama.generate(prompt=prompt, model="phi3:mini", system=RESEARCH_SYSTEM)
 
         sources = [
-            Citation(document_id=c.get("document_id"), chunk_index=c.get("chunk_index"), snippet=(c.get("text") or "")[:240])
-            for c in ctx if c.get("document_id") is not None
+            Citation(document_id=int(c.get("document_id") or 0), chunk_index=int(c.get("chunk_index") or 0), snippet=(c.get("text") or "")[:240])
+            for c in ctx if c is not None and c.get("document_id") is not None
         ]
 
         return ChatResponse(conversation_id=0, message_id=0, content=answer, sources=sources, trace=[])

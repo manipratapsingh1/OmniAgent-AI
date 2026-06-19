@@ -16,14 +16,43 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         structlog.contextvars.bind_contextvars(request_id=request_id, path=request.url.path)
 
         client_ip = request.client.host if request.client else "unknown"
+        rate_limit_key = client_ip
+        
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            try:
+                from app.core.security import decode_token
+                payload = decode_token(token)
+                if payload and "sub" in payload:
+                    rate_limit_key = f"user:{payload['sub']}"
+            except Exception:
+                pass
+
         try:
-            await enforce_rate_limit(client_ip)
+            await enforce_rate_limit(rate_limit_key)
         except Exception as e:
             from fastapi.responses import JSONResponse
-            return JSONResponse(status_code=429, content={"detail": str(e)})
+            # Handle rate limit exceeded cleanly
+            return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded. Please try again later."})
 
+        import asyncio
         start = time.perf_counter()
-        response = await call_next(request)
+        
+        # Determine gateway timeout: 180s for streams, 30s otherwise
+        is_stream = "stream" in request.url.path
+        timeout_seconds = 180.0 if is_stream else 30.0
+
+        try:
+            response = await asyncio.wait_for(call_next(request), timeout=timeout_seconds)
+        except asyncio.TimeoutError:
+            from fastapi.responses import JSONResponse
+            logger.error("http.timeout", path=request.url.path, timeout=timeout_seconds)
+            return JSONResponse(
+                status_code=504,
+                content={"detail": "Request gateway timeout"}
+            )
+
         elapsed_ms = (time.perf_counter() - start) * 1000
         response.headers["x-request-id"] = request_id
         logger.info(

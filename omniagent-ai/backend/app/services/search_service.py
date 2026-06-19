@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 from app.models.conversation import Conversation
 from app.models.message import Message
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 import structlog
 
@@ -47,7 +47,7 @@ class SearchService:
 
     def get_recent_conversations(self, user_id: int, days: int = 7, limit: int = 10) -> List[Conversation]:
         """Get recent conversations from last N days"""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
         
         conversations = self.db.exec(
             select(Conversation)

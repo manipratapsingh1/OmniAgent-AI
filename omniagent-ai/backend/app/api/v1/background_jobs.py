@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 from app.deps import db_session, current_user
@@ -21,8 +21,7 @@ class BackgroundJobResponse(BaseModel):
     started_at: Optional[str]
     completed_at: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/jobs", response_model=List[BackgroundJobResponse])

@@ -6,8 +6,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useNotificationStore } from "../../store/notificationStore";
 import ThemeToggle from "./ThemeToggle";
 import HealthStatus from "../HealthStatus";
-import { 
-  FiMessageSquare, FiFileText, FiSettings, FiShield, 
+import {
+  FiMessageSquare, FiFileText, FiSettings, FiShield,
   FiPlus, FiLoader, FiChevronDown, FiChevronRight,
   FiFolder, FiStar, FiSearch, FiMoreHorizontal, FiBarChart2, FiUsers
 } from "react-icons/fi";
@@ -18,12 +18,14 @@ export default function Sidebar() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searching, setSearching] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ "All": true });
   const addNotification = useNotificationStore((s) => s.addNotification);
 
   useEffect(() => {
     loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function Sidebar() {
     }, 300);
 
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const loadConversations = async (query = "") => {
@@ -73,9 +76,9 @@ export default function Sidebar() {
   };
 
   const pinnedConversations = useMemo(() => conversations.filter(c => c.is_pinned), [conversations]);
-  
+
   const sharedConversations = useMemo(() => conversations.filter(c => c.is_shared), [conversations]);
-  
+
   const folders = useMemo(() => {
     const groups: Record<string, typeof conversations> = {};
     conversations.filter(c => !c.is_pinned && !c.is_shared).forEach(c => {
@@ -97,7 +100,7 @@ export default function Sidebar() {
   return (
     <aside className="w-72 flex flex-col h-screen bg-slate-950 border-r border-slate-800/60 shadow-2xl relative z-30">
       {/* Brand Header */}
-      <div className="p-6 flex items-center justify-between border-b border-slate-800/40">
+      <div className="py-4 px-6 flex items-center justify-between border-b border-slate-800/40">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-glow-sm">
             <div className="w-4 h-4 rounded-full bg-white/20 animate-pulse" />
@@ -111,15 +114,27 @@ export default function Sidebar() {
       </div>
 
       {/* Action Area */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         <motion.button
           whileHover={{ scale: 1.02, y: -1 }}
           whileTap={{ scale: 0.98 }}
+          animate={{
+            boxShadow: [
+              "0 2px 10px rgba(59, 130, 246, 0.2)",
+              "0 2px 22px rgba(59, 130, 246, 0.45)",
+              "0 2px 10px rgba(59, 130, 246, 0.2)"
+            ]
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
           onClick={() => {
             setActive(null);
             setMessages([]);
           }}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
         >
           <FiPlus size={18} />
           New Thread
@@ -131,13 +146,13 @@ export default function Sidebar() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-10 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+            className="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-10 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
           />
         </div>
       </div>
 
       {/* Scrollable Chat History */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-2 space-y-6">
+      <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-2 space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
             <FiLoader className="animate-spin text-blue-500" size={24} />
@@ -147,7 +162,7 @@ export default function Sidebar() {
           <>
             {/* Pinned Section */}
             {pinnedConversations.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 px-2 py-1">
                   <FiStar className="text-amber-400" size={12} />
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pinned</span>
@@ -160,7 +175,7 @@ export default function Sidebar() {
 
             {/* Shared Section */}
             {sharedConversations.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 px-2 py-1">
                   <FiUsers className="text-cyan-400" size={12} />
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Shared</span>
@@ -174,7 +189,7 @@ export default function Sidebar() {
             {/* Folders & Recent */}
             {Object.entries(folders).map(([folderName, items]) => (
               <div key={folderName} className="space-y-1">
-                <button 
+                <button
                   onClick={() => toggleFolder(folderName)}
                   className="w-full flex items-center justify-between px-2 py-1 group"
                 >
@@ -187,10 +202,10 @@ export default function Sidebar() {
                   </div>
                   <span className="text-[10px] font-bold text-slate-700 group-hover:text-slate-500 transition-colors">{items.length}</span>
                 </button>
-                
+
                 <AnimatePresence>
                   {expandedFolders[folderName] && (
-                    <motion.div 
+                    <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -209,21 +224,21 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="p-4 border-t border-slate-800/60 bg-slate-900/20">
-        <nav className="space-y-1 mb-4">
+      <div className="p-3 border-t border-slate-800/60 bg-slate-900/20">
+        <nav className="space-y-1 mb-2">
           {navItems.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group border ${
-                window.location.pathname === item.to 
-                  ? "bg-blue-600/10 border-blue-600/20 text-blue-400" 
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50 border-transparent"
-              }`}
-            >
-              <item.icon size={18} />
-              <span className="text-sm font-semibold">{item.label}</span>
-            </Link>
+            <motion.div key={item.to} whileHover={{ x: 4 }}>
+              <Link
+                to={item.to}
+                className={`flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 group border ${window.location.pathname === item.to
+                    ? "bg-blue-600/10 border-blue-600/20 text-blue-400 font-semibold"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50 border-transparent"
+                  }`}
+              >
+                <item.icon size={16} />
+                <span className="text-xs font-semibold">{item.label}</span>
+              </Link>
+            </motion.div>
           ))}
         </nav>
         <HealthStatus />
@@ -232,22 +247,29 @@ export default function Sidebar() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChatLink({ c, active, onClick }: { c: any, active: boolean, onClick: () => void }) {
   return (
-    <button
+    <motion.button
+      whileHover={{ x: 2 }}
       onClick={onClick}
-      className={`w-full text-left text-xs px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
-        active
-          ? "bg-slate-900 text-white border border-slate-700 shadow-xl"
-          : "hover:bg-slate-900/50 text-slate-400 hover:text-slate-200 border border-transparent"
-      }`}
+      className={`w-full text-left text-xs px-3 py-2.5 rounded-xl transition-all duration-200 group relative border ${active
+          ? "bg-slate-900 text-white border-slate-800 shadow-glow-sm"
+          : "hover:bg-slate-900/40 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800/40"
+        }`}
     >
       <div className="flex items-center gap-3 overflow-hidden">
         <FiMessageSquare size={14} className={`flex-shrink-0 ${active ? "text-blue-500" : "opacity-40"}`} />
         <span className="flex-1 truncate font-medium">{c.title}</span>
-        {active && <div className="w-1 h-4 rounded-full bg-blue-500 absolute left-0 top-1/2 -translate-y-1/2" />}
+        {active && (
+          <motion.div
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            className="w-1 h-5 rounded-r bg-blue-500 absolute left-0 top-1/2 -translate-y-1/2 shadow-[0_0_8px_#3b82f6]"
+          />
+        )}
         <FiMoreHorizontal size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-white" />
       </div>
-    </button>
+    </motion.button>
   );
 }

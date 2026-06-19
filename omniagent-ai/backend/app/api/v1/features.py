@@ -485,3 +485,128 @@ async def get_tag_usage_analytics(
     except Exception as e:
         log.error("analytics.tag_usage_failed", error=str(e))
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ==================== KNOWLEDGE GRAPH & SECOND BRAIN ====================
+
+@router.get("/knowledge-graph")
+async def get_knowledge_graph(
+    db: Session = Depends(db_session),
+    user: User = Depends(current_user),
+):
+    """Get the user's knowledge graph relationships."""
+    from app.models.knowledge import KnowledgeRelationship
+
+    rels = db.exec(
+        select(KnowledgeRelationship).where(KnowledgeRelationship.user_id == user.id)
+    ).all()
+
+    nodes: dict = {}
+    edges = []
+    for rel in rels:
+        nodes[rel.source_id] = {"id": rel.source_id, "type": rel.source_type}
+        nodes[rel.target_id] = {"id": rel.target_id, "type": rel.target_type}
+        edges.append({
+            "source": rel.source_id,
+            "target": rel.target_id,
+            "relation": rel.relation,
+            "weight": rel.weight,
+        })
+
+    return {"nodes": list(nodes.values()), "edges": edges, "total": len(edges)}
+
+
+@router.get("/study-materials")
+async def get_study_materials(
+    document_id: Optional[int] = Query(None),
+    material_type: Optional[str] = Query(None),
+    db: Session = Depends(db_session),
+    user: User = Depends(current_user),
+):
+    """Get AI-generated study materials (flashcards, quizzes, action items)."""
+    from app.models.knowledge import StudyMaterial
+
+    stmt = select(StudyMaterial).where(StudyMaterial.user_id == user.id)
+    if document_id:
+        stmt = stmt.where(StudyMaterial.document_id == document_id)
+    if material_type:
+        stmt = stmt.where(StudyMaterial.material_type == material_type)
+
+    materials = db.exec(stmt).all()
+    return {
+        "materials": [
+            {
+                "id": m.id,
+                "document_id": m.document_id,
+                "type": m.material_type,
+                "content": m.content,
+                "is_completed": m.is_completed,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in materials
+        ],
+        "total": len(materials),
+    }
+
+
+@router.get("/hybrid-knowledge/status")
+async def hybrid_knowledge_status(
+    user: User = Depends(current_user),
+):
+    """Return hybrid knowledge engine configuration and capabilities."""
+    from app.config import get_settings
+    from app.services.ai.provider_registry import build_providers
+    s = get_settings()
+    return {
+        "engine": "HybridKnowledgeEngine v2.0",
+        "modes": ["auto", "documents_only", "ai_only"],
+        "knowledge_sources": [
+            "uploaded_documents",
+            "knowledge_base",
+            "conversation_memory",
+            "web_search",
+            "foundation_model",
+        ],
+        "search": {
+            "vector_search": True,
+            "bm25_keyword": True,
+            "reciprocal_rank_fusion": True,
+            "reranking": True,
+            "context_compression": True,
+            "web_search_providers": ["duckduckgo", "tavily", "brave", "serpapi", "searxng"],
+        },
+        "cases_supported": 6,
+        "web_search_enabled": s.ENABLE_WEB_SEARCH,
+        "multi_model_routing": True,
+        "providers_available": list(build_providers().keys()),
+    }
+
+
+class DeepResearchRequest(BaseModel):
+    query: str
+    include_web: bool = True
+    conversation_id: Optional[int] = None
+
+
+@router.post("/deep-research")
+async def deep_research(
+    req: DeepResearchRequest,
+    db: Session = Depends(db_session),
+    user: User = Depends(current_user),
+):
+    """Execute deep research mode: multi-source evidence gathering and report generation."""
+    from app.services.deep_research_service import DeepResearchService
+    from app.services.ai.provider_registry import build_providers
+
+    try:
+        service = DeepResearchService(db, providers=build_providers())
+        result = await service.research(
+            user_id=user.id,
+            query=req.query,
+            include_web=req.include_web,
+            conversation_id=req.conversation_id,
+        )
+        return result
+    except Exception as e:
+        log.error("deep_research.failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))

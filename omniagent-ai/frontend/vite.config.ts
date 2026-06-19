@@ -21,6 +21,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ["react", "react-dom", "react-router-dom", "zustand", "axios"],
+          ui: ["framer-motion", "react-icons"],
+          markdown: ["react-markdown", "remark-gfm"],
         },
       },
     },
